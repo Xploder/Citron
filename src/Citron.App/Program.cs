@@ -10,7 +10,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Win32;
-using Forms = System.Windows.Forms;
 
 namespace Citron;
 internal static class Program
@@ -20,7 +19,7 @@ internal static class Program
     {
         AppDomain.CurrentDomain.UnhandledException += (_, e) => Log(e.ExceptionObject.ToString()!);
         using var single = new Mutex(true, "Local\\Citron.Desktop", out bool first);
-        if (!first) return;
+        if (!first) { NativeTray.ShowExisting(); return; }
         WinRT.ComWrappersSupport.InitializeComWrappers();
         Application.Start(_ => { SynchronizationContext.SetSynchronizationContext(new Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread())); new CitronApp(); });
     }
@@ -48,7 +47,7 @@ public sealed partial class CitronApp : Application
     ToggleSwitch enabled = null!;
     NumberBox interval = null!, duration = null!;
     CheckBox awake = null!;
-    Forms.NotifyIcon tray = null!;
+    NativeTray tray = null!;
     DispatcherTimer timer = null!;
     Preferences prefs = new();
     string architecture = "x64";
@@ -61,7 +60,7 @@ public sealed partial class CitronApp : Application
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         Program.Log("Launch");
-        try { prefs = JsonSerializer.Deserialize<Preferences>(File.ReadAllText(PrefPath)) ?? new(); } catch { }
+        try { prefs = JsonSerializer.Deserialize(File.ReadAllText(PrefPath), JsonContext.Default.Preferences) ?? new(); } catch { }
         Strings.Language = prefs.Language;
         window = new Window { Title = "Citron", SystemBackdrop = new MicaBackdrop() };
         Program.Log("Window created");
@@ -75,14 +74,11 @@ public sealed partial class CitronApp : Application
         window.AppWindow.Closing += (_, e) => { if (!exiting) { e.Cancel = true; window.AppWindow.Hide(); } };
         BuildUi();
         Program.Log("UI created");
-        tray = new Forms.NotifyIcon { Text = "Citron", Icon = new System.Drawing.Icon(Path.Combine(AppContext.BaseDirectory, "Assets", "CitronPaused.ico")), Visible = true };
-        tray.DoubleClick += (_, _) => window.DispatcherQueue.TryEnqueue(() => { if (!running && sessions.SelectedItem == null) window.Activate(); else enabled.IsOn = !running; });
-        TrayMenu();
+        tray = new NativeTray(WinRT.Interop.WindowNative.GetWindowHandle(window), () => { tray?.Show(); window.Activate(); }, () => { if (!running && sessions.SelectedItem == null) window.Activate(); else enabled.IsOn = !running; }, OnSessionLock, Quit);
         Program.Log("Tray created");
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += async (_, _) => await Tick();
         timer.Start();
-        SystemEvents.SessionSwitch += OnSessionSwitch;
         window.Activate();
         Program.Log("Window activated");
         _ = Initialize();
@@ -94,11 +90,12 @@ public sealed partial class CitronApp : Application
         prefs.SetupPrompted = true; Save();
         try { await Configure(false); } catch (Exception ex) { await Error(ex.Message); }
     }
-    void OnSessionSwitch(object sender, SessionSwitchEventArgs e) => window.DispatcherQueue.TryEnqueue(() =>
+    void OnSessionLock(bool isLocked)
     {
-        if (e.Reason == SessionSwitchReason.SessionLock) { locked = true; SetThreadExecutionState(0x80000000); status.Text = Strings.T("locked"); }
-        if (e.Reason == SessionSwitchReason.SessionUnlock) { locked = false; next = DateTimeOffset.UtcNow; }
-    });
+        locked = isLocked;
+        if (locked) { SetThreadExecutionState(0x80000000); status.Text = Strings.T("locked"); }
+        else next = DateTimeOffset.UtcNow;
+    }
     void BuildUi()
     {
         root = new StackPanel { Spacing = 14, Margin = new Thickness(28, 16, 28, 28) };
@@ -122,7 +119,7 @@ public sealed partial class CitronApp : Application
             started = next = DateTimeOffset.UtcNow;
             if (!running) SetThreadExecutionState(0x80000000);
             status.Text = Strings.T(running ? "active" : "idle");
-            if (tray != null) { tray.Text = "Citron — " + (running ? "●" : "○"); var oldIcon = tray.Icon; tray.Icon = new System.Drawing.Icon(Path.Combine(AppContext.BaseDirectory, "Assets", running ? "Citron.ico" : "CitronPaused.ico")); oldIcon?.Dispose(); }
+            tray?.SetActive(running);
         };
         root.Children.Add(enabled);
         interval = new NumberBox { Header = Strings.T("interval"), Minimum = 15, Maximum = 3600, Value = Math.Clamp(prefs.Interval, 15, 3600), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
@@ -135,7 +132,7 @@ public sealed partial class CitronApp : Application
         string[] codes = ["en", "de", "es", "fr", "pt"];
         foreach (string label in new[] { "English", "Deutsch", "Español", "Français", "Português" }) language.Items.Add(label);
         language.SelectedIndex = Math.Max(0, Array.IndexOf(codes, Strings.Language));
-        language.SelectionChanged += (_, _) => { enabled.IsOn = false; Strings.Language = codes[language.SelectedIndex]; Save(); BuildUi(); TrayMenu(); _ = Scan(); };
+        language.SelectionChanged += (_, _) => { enabled.IsOn = false; Strings.Language = codes[language.SelectedIndex]; Save(); BuildUi(); _ = Scan(); };
         root.Children.Add(language);
         var actions = new StackPanel { Spacing = 8 };
         actions.Children.Add(Button("setup", () => Configure(false)));
@@ -161,22 +158,14 @@ public sealed partial class CitronApp : Application
         button.Click += async (_, _) => { button.IsEnabled = false; try { await action(); } catch (Exception ex) { await Error(ex.Message); } finally { button.IsEnabled = true; } };
         return button;
     }
-    void TrayMenu()
-    {
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add(Strings.T("settings"), null, (_, _) => window.DispatcherQueue.TryEnqueue(() => window.Activate()));
-        menu.Items.Add(Strings.T("toggle"), null, (_, _) => window.DispatcherQueue.TryEnqueue(() => enabled.IsOn = !enabled.IsOn));
-        menu.Items.Add(Strings.T("exit"), null, (_, _) => window.DispatcherQueue.TryEnqueue(Quit));
-        var old = tray.ContextMenuStrip; tray.ContextMenuStrip = menu; old?.Dispose();
-    }
-    void Quit() { exiting = true; timer.Stop(); SetThreadExecutionState(0x80000000); SystemEvents.SessionSwitch -= OnSessionSwitch; tray.Visible = false; tray.Icon?.Dispose(); tray.Dispose(); window.Close(); Exit(); }
+    void Quit() { exiting = true; timer.Stop(); SetThreadExecutionState(0x80000000); tray.Dispose(); window.Close(); Exit(); }
     void Save()
     {
         prefs.Language = Strings.Language;
         if (double.IsFinite(interval.Value)) prefs.Interval = (int)Math.Clamp(interval.Value, 15, 3600);
         if (double.IsFinite(duration.Value)) prefs.Duration = (int)Math.Clamp(duration.Value, 0, 1440);
         prefs.KeepAwake = awake?.IsChecked == true;
-        try { Directory.CreateDirectory(Path.GetDirectoryName(PrefPath)!); File.WriteAllText(PrefPath, JsonSerializer.Serialize(prefs)); } catch (Exception ex) { status.Text = ex.Message; }
+        try { Directory.CreateDirectory(Path.GetDirectoryName(PrefPath)!); File.WriteAllText(PrefPath, JsonSerializer.Serialize(prefs, JsonContext.Default.Preferences)); } catch (Exception ex) { status.Text = ex.Message; }
     }
     string Worker => Path.Combine(AppContext.BaseDirectory, "workers", architecture, "Citron.Worker.exe");
     async Task<JsonElement> Run(string command, string? session = null)

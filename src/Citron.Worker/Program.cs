@@ -1,6 +1,10 @@
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
-using System.Text.Json;
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using System.Web.Script.Serialization;
 using System.Security.Principal;
 
 namespace Citron.Worker;
@@ -116,5 +120,5 @@ internal static class Program
         }
     }
     static void Release(object? value) { if (value != null && Marshal.IsComObject(value)) Marshal.FinalReleaseComObject(value); }
-    static void Emit(object result) => Console.WriteLine(JsonSerializer.Serialize(result));
+    static void Emit(object result) => Console.WriteLine(new JavaScriptSerializer().Serialize(result));
 }

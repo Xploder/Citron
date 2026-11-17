@@ -1,0 +1,5 @@
+<Project>
+  <!-- Optional compatibility switch for build hosts that cannot create MSBuild task-host pipes. -->
+  <UsingTask TaskName="ComputeManagedAssemblies" AssemblyFile="$(ILLinkTasksAssembly)" Override="true" Condition="'$(CitronInProcessTasks)' == 'true' and '$(ILLinkTasksAssembly)' != ''" />
+  <UsingTask TaskName="ILLink" AssemblyFile="$(ILLinkTasksAssembly)" Override="true" Condition="'$(CitronInProcessTasks)' == 'true' and '$(ILLinkTasksAssembly)' != ''" />
+</Project>

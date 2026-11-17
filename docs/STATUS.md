@@ -1,32 +1,35 @@
-# Development status
+# Development status — v0.2.0
 
 ## Implemented
 
-- WinUI 3 settings window with custom title bar, app icon, tray icon states, and double-click toggle.
-- English, German, Spanish, French, Portuguese; follows initial OS language, manual choice persists.
-- Selected-session ICA/CCM backend in separate x86/x64 STA worker processes; 12-second UI timeout.
-- Interval, duration, local power request, Windows lock pause, paused startup, single instance.
-- Registry checks, first-run setup dialog, UAC setup helper, previous-value backup and restore.
-- Self-contained Windows x64 distribution, including both helper architectures.
+- Native WinUI 3 / .NET 10 UI, custom title bar, app icon, native Windows tray, double-click activity toggle.
+- English, German, Spanish, French, Portuguese; initial Windows language and persisted manual selection.
+- Separate, architecture-matched x86/x64 .NET Framework 4.7.2 ICA/CCM helpers, using Windows' included runtime.
+- Per-session selection, 12-second helper timeout, interval, duration, local power request, Windows lock pause.
+- Paused startup, single instance with activation of the existing window, Explorer tray recreation handling.
+- Guided registry setup with UAC, previous-value backup and restoration.
+- Partial trimming, focused WinUI dependency, generated JSON settings, and compressed single-file distribution.
 
-## Verified on the development machine
+## Verified
 
-- Release compilation and publication of UI, x64 worker, and x86 worker.
-- Read-only detection of Citrix Workspace 26.10.0.12, native x64 ICA COM registration.
-- Both required CCM settings are missing. No registry setup has been performed by the developer.
-- UI starts with the custom title bar and icons; German-to-English switching was verified. The language picker exposes all five languages.
-- First-run setup dialog appears; cancelling it was verified. x86/x64 checks and refusal of unconfigured session access pass verify.ps1.
-- Private GitHub repository created at https://github.com/Xploder/Citron.
+- Portable output contains one executable of approximately 34 MiB, down from 433 MiB / 1,160 files.
+- Both helper PE architectures run and report the expected process architecture.
+- Registry checks pass; a helper with missing setup values refuses session access.
+- Startup of the actual compressed EXE succeeds with bundled icons, XAML resources, and helper execution.
+- On this machine, Citrix Workspace 26.10.0.12 x64 COM activation and session enumeration succeed; no connected sessions were returned during this test.
+- Required registry values were already enabled when the compact version was checked. The packaging task did not change them.
+- German UI renders; German-to-English switching and first-run setup cancellation were verified on the earlier prototype.
+- Existing GitHub CLI access was refreshed through browser device authorization and user-completed two-factor authentication. Upload uses the task-specific CLI configuration outside the repository.
 
-## Acceptance tests still required
+## Remaining acceptance tests
 
-- UAC approval / cancellation, registry restoration, actual connected-session enumeration.
-- Successful input delivery and idle-timer reset while minimized, with no previous click.
-- Reconnect, multiple-session selection, remote application F15 side effects.
-- Tray toggle/Explorer restart recovery and Windows lock/unlock behavior.
-- Full visual review of all five translations.
+- Connected-session input delivery, minimized/background operation, remote idle-timer reset, and F15 effects.
+- UAC setup approval, backup/restore round trip, and denied-UAC behavior.
+- Multiple sessions, reconnect handling, hung COM calls, Windows lock/unlock, and Explorer restart recovery.
+- Full translated UI and tray-interaction review on the compact build.
 
-## GitHub CLI issue
+## Build notes
 
-The browser and GitHub connector authenticate as Xploder. GitHub CLI's separate stored token returns HTTP 401 (Bad credentials). Native Git Credential Manager has no usable credential in the current execution context. Re-authenticate the CLI with `gh auth login -h github.com`, then verify `gh auth status`. Do not copy tokens from browser storage. Repository-local Git author is `ChatGPT <chatgpt@openai.com>`; this metadata does not guarantee association with an official GitHub profile. Source upload remains pending until authenticated Git push is available.
+The linker reports IL2104 warnings in Microsoft's Windows SDK projection and WinRT runtime assemblies. These warnings are not suppressed. The packaged application's startup and registry/session-enumeration path were smoke-tested; this does not establish that every UI or WinRT path is trim-safe. Citrix helpers are not trimmed.
 
+Commits use repository-local author metadata `ChatGPT <chatgpt@openai.com>`. This does not imply a verified GitHub identity. The repository remains private.
