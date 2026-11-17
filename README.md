@@ -8,7 +8,7 @@
 
 A compact, multilingual Windows tray companion for Citrix sessions.
 
-**WinUI 3 · One EXE · 5 languages · Windows x64 · Experimental preview**
+**WinUI 3 · One EXE · 5 languages · Windows x64 · Public release**
 
 [Download v0.2.2](https://github.com/Xploder/Citron/releases/tag/v0.2.2) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
@@ -22,7 +22,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 Citron is a native Windows utility designed to send periodic input directly to a selected Citrix session through the ICA Client Object / CCM interface. It does not use local keyboard injection or switch the foreground window to Citrix.
 
-**Minimized-session delivery remains environment-dependent and has not yet passed end-to-end acceptance testing.** A successful API call is not proof that a remote idle timer was reset. Citrix versions, installation variants, and server policies affect compatibility.
+**The maintainer reported a successful live test with a minimized Citrix session on November 17, 2026.** The separate screen-on option was also reported to work on the tested laptop. This validates that environment, not every Citrix deployment: client versions, installation variants, remote applications, and server policies can affect compatibility. The laptop Windows/Citrix versions and exact test duration were not recorded.
 
 ## 🧩 Features
 
@@ -118,6 +118,6 @@ The ICA/CCM approach was identified from [Andy Morgan's CaffeineForCitrixWorkspa
 
 Citron is an AI-assisted project built with ChatGPT/Codex and reviewed through real Windows builds and UI checks. Commits created for this project use `ChatGPT <chatgpt@openai.com>` as author metadata; this is not a verified GitHub identity or an endorsement by OpenAI.
 
-Development, GitHub documentation, and release notes are in English. The application itself is multilingual. This repository remains private during development.
+Development, GitHub documentation, and release notes are in English. The application itself is multilingual. Citron is publicly available.
 
 Dependency license texts and notices are in [docs/licenses](docs/licenses) and are embedded in the executable.
