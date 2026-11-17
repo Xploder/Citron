@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AACFD1E6-C0A4-41FB-B4BD-77115F1B81BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citron.App", "src\Citron.App\Citron.App.csproj", "{4CF1E0A8-F51B-46E1-A80C-174016B99163}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citron.Worker", "src\Citron.Worker\Citron.Worker.csproj", "{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163} = {AACFD1E6-C0A4-41FB-B4BD-77115F1B81BA}
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A} = {AACFD1E6-C0A4-41FB-B4BD-77115F1B81BA}
+	EndGlobalSection
+EndGlobal
