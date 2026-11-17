@@ -12,7 +12,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 [Download v0.2.2](https://github.com/Xploder/Citron/releases/tag/v0.2.2) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
-<img src="docs/screenshot.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
+<img src="docs/citron-v0.2.2.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
 
 </div>
 
