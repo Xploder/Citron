@@ -14,6 +14,8 @@ internal static class Strings
         ["refresh"] = ["Find sessions", "Sitzungen suchen", "Buscar sesiones", "Rechercher les sessions", "Buscar sessões"],
         ["enable"] = ["Keep session active", "Sitzung aktiv halten", "Mantener la sesión activa", "Maintenir la session active", "Manter a sessão ativa"],
         ["interval"] = ["Interval (seconds)", "Intervall (Sekunden)", "Intervalo (segundos)", "Intervalle (secondes)", "Intervalo (segundos)"],
+        ["randomize"] = ["Vary intervals randomly (±10%)", "Intervalle zufällig variieren (±10 %)", "Variar los intervalos al azar (±10 %)", "Varier les intervalles aléatoirement (±10 %)", "Variar os intervalos aleatoriamente (±10%)"],
+        ["randomizeHint"] = ["For example: 60 seconds becomes approximately 54–66 seconds. Off: use the configured interval.", "Beispiel: Aus 60 Sekunden werden etwa 54–66 Sekunden. Aus: eingestelltes Intervall verwenden.", "Ejemplo: 60 segundos se convierten en unos 54–66 segundos. Desactivado: usar el intervalo configurado.", "Exemple : 60 secondes deviennent environ 54–66 secondes. Désactivé : utiliser l’intervalle configuré.", "Exemplo: 60 segundos tornam-se cerca de 54–66 segundos. Desativado: usar o intervalo definido."],
         ["duration"] = ["Duration (minutes, 0 = unlimited)", "Dauer (Minuten, 0 = unbegrenzt)", "Duración (minutos, 0 = ilimitada)", "Durée (minutes, 0 = illimitée)", "Duração (minutos, 0 = ilimitada)"],
         ["language"] = ["Language", "Sprache", "Idioma", "Langue", "Idioma"],
         ["sleep"] = ["Also keep this PC awake", "Diesen PC ebenfalls wach halten", "Mantener también este PC activo", "Garder aussi ce PC éveillé", "Manter também este PC ativo"],

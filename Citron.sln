@@ -9,26 +9,63 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citron.App", "src\Citron.Ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citron.Worker", "src\Citron.Worker\Citron.Worker.csproj", "{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Citron.Timing.Tests", "tests\Citron.Timing.Tests\Citron.Timing.Tests.csproj", "{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|x64.Build.0 = Debug|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Debug|x86.Build.0 = Debug|Any CPU
 		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|x64.ActiveCfg = Release|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|x64.Build.0 = Release|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|x86.ActiveCfg = Release|Any CPU
+		{4CF1E0A8-F51B-46E1-A80C-174016B99163}.Release|x86.Build.0 = Release|Any CPU
 		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|x64.Build.0 = Debug|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Debug|x86.Build.0 = Debug|Any CPU
 		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|x64.ActiveCfg = Release|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|x64.Build.0 = Release|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|x86.ActiveCfg = Release|Any CPU
+		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A}.Release|x86.Build.0 = Release|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Debug|x64.Build.0 = Debug|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Debug|x86.Build.0 = Debug|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Release|x64.ActiveCfg = Release|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Release|x64.Build.0 = Release|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Release|x86.ActiveCfg = Release|Any CPU
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4CF1E0A8-F51B-46E1-A80C-174016B99163} = {AACFD1E6-C0A4-41FB-B4BD-77115F1B81BA}
 		{D97D6FA1-4745-4157-8CB5-AC1EEB87A72A} = {AACFD1E6-C0A4-41FB-B4BD-77115F1B81BA}
+		{09E184C9-B4C9-4C5F-9BA6-5021B34F6CC5} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

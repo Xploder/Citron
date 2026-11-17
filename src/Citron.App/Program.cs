@@ -29,14 +29,6 @@ internal static class Program
         Directory.CreateDirectory(path); File.AppendAllText(Path.Combine(path, "startup.log"), DateTime.Now + " " + message + Environment.NewLine); } catch { }
     }
 }
-internal sealed class Preferences
-{
-    public string Language { get; set; } = Strings.Language;
-    public int Interval { get; set; } = 60;
-    public int Duration { get; set; } = 0;
-    public bool KeepAwake { get; set; }
-    public bool SetupPrompted { get; set; }
-}
 public sealed partial class CitronApp : Application
 {
     public CitronApp() { UnhandledException += (_, e) => Program.Log(e.Exception.ToString()); InitializeComponent(); }
@@ -46,7 +38,7 @@ public sealed partial class CitronApp : Application
     ComboBox sessions = null!;
     ToggleSwitch enabled = null!;
     NumberBox interval = null!, duration = null!;
-    CheckBox awake = null!;
+    CheckBox awake = null!, randomizeInterval = null!;
     NativeTray tray = null!;
     DispatcherTimer timer = null!;
     Preferences prefs = new();
@@ -124,8 +116,14 @@ public sealed partial class CitronApp : Application
         root.Children.Add(enabled);
         interval = new NumberBox { Header = Strings.T("interval"), Minimum = 15, Maximum = 3600, Value = Math.Clamp(prefs.Interval, 15, 3600), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
         duration = new NumberBox { Header = Strings.T("duration"), Minimum = 0, Maximum = 1440, Value = Math.Clamp(prefs.Duration, 0, 1440), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
-        interval.ValueChanged += (_, _) => Save(); duration.ValueChanged += (_, _) => Save();
-        root.Children.Add(interval); root.Children.Add(duration);
+        interval.ValueChanged += (_, _) => { Save(); Reschedule(); }; duration.ValueChanged += (_, _) => Save();
+        root.Children.Add(interval);
+        randomizeInterval = new CheckBox { Content = Strings.T("randomize"), IsChecked = prefs.RandomizeInterval };
+        randomizeInterval.Checked += (_, _) => { Save(); Reschedule(); };
+        randomizeInterval.Unchecked += (_, _) => { Save(); Reschedule(); };
+        root.Children.Add(randomizeInterval);
+        root.Children.Add(new TextBlock { Text = Strings.T("randomizeHint"), TextWrapping = TextWrapping.Wrap, Opacity = .65, FontSize = 12 });
+        root.Children.Add(duration);
         awake = new CheckBox { Content = Strings.T("sleep"), IsChecked = prefs.KeepAwake };
         awake.Checked += (_, _) => Save(); awake.Unchecked += (_, _) => { Save(); SetThreadExecutionState(0x80000000); }; root.Children.Add(awake);
         var language = new ComboBox { Header = Strings.T("language"), HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -165,7 +163,12 @@ public sealed partial class CitronApp : Application
         if (double.IsFinite(interval.Value)) prefs.Interval = (int)Math.Clamp(interval.Value, 15, 3600);
         if (double.IsFinite(duration.Value)) prefs.Duration = (int)Math.Clamp(duration.Value, 0, 1440);
         prefs.KeepAwake = awake?.IsChecked == true;
+        prefs.RandomizeInterval = randomizeInterval?.IsChecked == true;
         try { Directory.CreateDirectory(Path.GetDirectoryName(PrefPath)!); File.WriteAllText(PrefPath, JsonSerializer.Serialize(prefs, JsonContext.Default.Preferences)); } catch (Exception ex) { status.Text = ex.Message; }
+    }
+    void Reschedule()
+    {
+        if (running && !busy) next = DateTimeOffset.UtcNow.Add(ActivityTiming.NextDelay(prefs.Interval, prefs.RandomizeInterval));
     }
     string Worker => Path.Combine(AppContext.BaseDirectory, "workers", architecture, "Citron.Worker.exe");
     async Task<JsonElement> Run(string command, string? session = null)
@@ -240,9 +243,10 @@ public sealed partial class CitronApp : Application
         busy = true;
         try
         {
+            var pulseStarted = DateTimeOffset.UtcNow;
             await Run("pulse", target);
             if (running) status.Text = Strings.T("active") + "\n" + DateTime.Now.ToString("T");
-            next = DateTimeOffset.UtcNow.AddSeconds(prefs.Interval);
+            next = pulseStarted.Add(ActivityTiming.NextDelay(prefs.Interval, prefs.RandomizeInterval));
         }
         catch (Exception ex) { enabled.IsOn = false; status.Text = Strings.T("error") + "\n" + ex.Message; }
         finally { busy = false; }

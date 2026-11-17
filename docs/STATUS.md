@@ -1,10 +1,11 @@
-# Development status — v0.2.0
+# Development status — v0.2.1
 
 ## Implemented
 
 - Native WinUI 3 / .NET 10 UI, custom title bar, app icon, native Windows tray, double-click activity toggle.
 - English, German, Spanish, French, Portuguese; initial Windows language and persisted manual selection.
 - Separate, architecture-matched x86/x64 .NET Framework 4.7.2 ICA/CCM helpers, using Windows' included runtime.
+- Optional randomized intervals: fresh ±10% variation per next attempt, disabled by default, persisted and translated in all five languages.
 - Per-session selection, 12-second helper timeout, interval, duration, local power request, Windows lock pause.
 - Paused startup, single instance with activation of the existing window, Explorer tray recreation handling.
 - Guided registry setup with UAC, previous-value backup and restoration.
@@ -13,6 +14,8 @@
 ## Verified
 
 - Portable output contains one executable of approximately 34 MiB, down from 433 MiB / 1,160 files.
+- The randomized-interval checkbox was visually checked in the packaged EXE; enabled state persisted through quit/relaunch, then was restored to the fixed default.
+- Timing tests pass: fixed mode does not consume RNG; randomized values stay within bounds, vary in both directions, and retain the configured average. Old settings remain fixed and the new preference survives JSON round trips.
 - Both helper PE architectures run and report the expected process architecture.
 - Registry checks pass; a helper with missing setup values refuses session access.
 - Startup of the actual compressed EXE succeeds with bundled icons, XAML resources, and helper execution.

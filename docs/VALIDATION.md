@@ -10,3 +10,7 @@
 8. Exercise a hung worker: UI stays responsive; timeout pauses operation. Restart Explorer: verify tray recovery.
 
 Do not label minimized-session compatibility as verified until steps 4–5 pass on the exact deployed Citrix version. Setup/restore and live simulation require an interactive environment and are not performed by the build script.
+
+## Optional randomized intervals
+
+Run `dotnet run --project tests/Citron.Timing.Tests -c Release`. It checks fixed mode without RNG use, ±10% boundaries, variation on successive draws, average interval, invalid saved values, old-settings compatibility, and JSON persistence. In the UI, verify that the checkbox is initially off, saves across restarts, and survives language changes. Changing it while active reschedules the next attempt. The first attempt after activation is still immediate. Live delivery timing depends on Windows scheduling and the one-second polling timer. No monitoring-classification claim is made.
