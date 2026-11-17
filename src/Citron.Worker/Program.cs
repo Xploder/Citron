@@ -55,7 +55,8 @@ internal static class Program
                 finally { client.CloseEnumHandle(handle); }
                 if (command == "pulse")
                 {
-                    if (args.Length != 2 || !sessions.Contains(args[1])) throw new InvalidOperationException("The selected session is no longer available.");
+                    if (args.Length != 2) throw new ArgumentException("A target session is required.");
+                    if (!sessions.Contains(args[1])) { Emit(new { ok = true, configured, sessions, sent = false, missing = true }); return 0; }
                     object? targetObject = null;
                     bool monitoring = false;
                     try

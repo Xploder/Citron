@@ -36,6 +36,14 @@ Check(!oldSettings.KeepDisplayOn, "Old settings must not implicitly enable the s
 var displaySettings = JsonSerializer.Serialize(new Preferences { KeepAwake = true, KeepDisplayOn = true }, JsonContext.Default.Preferences);
 Check(JsonSerializer.Deserialize(displaySettings, JsonContext.Default.Preferences)!.KeepDisplayOn, "Screen preference must persist.");
 Console.WriteLine("PASS separate system/display requests, pause/lock/disable release, and screen-preference compatibility/persistence.");
+Check(SessionPolicy.TargetExists("123", new[] { "123", "456" }), "Existing target must remain active.");
+Check(!SessionPolicy.TargetExists("123", new[] { "456" }), "A different session must not keep the target active.");
+Check(!SessionPolicy.TargetExists("123", Array.Empty<string>()), "An empty snapshot must stop activity.");
+Check(!SessionPolicy.TargetExists(null, new[] { "123" }), "No target must not become active automatically.");
+Check(SessionPolicy.CheckInterval == TimeSpan.FromSeconds(15), "Presence polling must be throttled.");
+var executable = @"C:\Program Files\Citron\Citron.exe";
+Check(StartupRegistration.Command(executable) == "\"" + executable + "\" --tray", "Startup must quote the real portable executable and request tray mode.");
+Console.WriteLine("PASS session disappearance/selection isolation, polling cadence, and quoted startup command.");
 
 sealed class RejectRandom : Random { public override double NextDouble() => throw new Exception("RNG used in fixed mode."); }
 sealed class FixedRandom(double sample) : Random { public override double NextDouble() => sample; }

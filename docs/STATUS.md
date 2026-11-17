@@ -1,4 +1,4 @@
-# Development status — v0.2.2
+# Development status — v0.3.0
 
 ## Implemented
 
@@ -44,3 +44,7 @@ The original local wake option only set ES_SYSTEM_REQUIRED; display timeout and 
 ## Public release confirmation — November 17, 2026
 
 The maintainer reported successful use of the screen-on option on a laptop and confirmed that Citron works after testing the minimized Citrix session. v0.2.2 is promoted from preview to a regular release using the same executable and checksum. This report is specific to the tested environment and is not a universal compatibility guarantee.
+
+## v0.3.0
+
+Added opt-in per-user Windows Run registration using the real executable path and --tray. Autostart remains paused and skips setup popups. Active session presence is checked every 15 seconds, reusing pulse enumeration. A missing target or failed check pauses activity, clears stale selection, and releases wake requests. Tests cover target disappearance, unrelated sessions, polling cadence, and quoted startup command. A local scan measured 402 ms elapsed / 297 ms CPU. Compact expandable sections and explicit registry-backup restoration wording replace the long flat layout. No screenshot was captured or replaced. Actual Windows sign-in startup, the new layout, and live-session termination require user validation.

@@ -10,7 +10,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 **WinUI 3 · One EXE · 5 languages · Windows x64 · Public release**
 
-[Download v0.2.2](https://github.com/Xploder/Citron/releases/tag/v0.2.2) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
+[Download v0.3.0](https://github.com/Xploder/Citron/releases/tag/v0.3.0) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
 <img src="docs/citron-v0.2.2.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
 
@@ -40,7 +40,7 @@ Citron is a native Windows utility designed to send periodic input directly to a
 
 ## 🚀 Getting started
 
-1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.2.2).
+1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.3.0).
 2. Run it from a folder you can keep permanently. No separate .NET 10 or Windows App Runtime installation is needed.
 3. On first launch, review **Set up Citrix access**. Approve the Windows UAC prompt if setup is required.
 4. Connect a session using the native Citrix Workspace client, then select **Find sessions**.
@@ -54,6 +54,14 @@ Citron always starts paused. Closing the settings window keeps it in the tray; *
 - Native Citrix Workspace with a registered ICA Client Object component. HTML5/browser-only sessions and the Microsoft Store SDK variant are not supported by this backend.
 - .NET Framework 4.7.2 or newer for the tiny Citrix helpers. This is part of the supported Windows baseline; see [Microsoft's version table](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies).
 - Administrator approval only when changing the machine-wide Citrix setup values. The ordinary UI and simulation helpers run unelevated.
+
+## New in v0.3.0
+
+- **Start with Windows** is off by default. Under **Settings and Citrix setup**, enable per-user startup using the real portable EXE path. It starts paused in the tray after sign-in. No administrator rights are needed. If you move the EXE, toggle the option off/on to update its path.
+- While active, Citron checks session presence every **15 seconds**, reusing normal activity enumeration. A missing target automatically pauses activity, removes the stale selection, and releases local power requests. Failed checks also pause activity and clear the list. Slow checks may take up to the 12-second deadline. Paused Citron does not poll continuously; workers never overlap.
+- A local read-only scan measured approximately **402 ms elapsed / 297 ms CPU**. Costs vary by machine and Citrix client.
+- The smaller window groups controls into expandable **Timing**, **PC and display**, and **Settings and Citrix setup** sections, with interval/duration side by side. The screenshot above is intentionally unchanged and predates this layout.
+- **Restore Citrix registry backup from before Citron setup** restores the backed-up registry values, not interval/language or other app preferences. The confirmation explains this distinction.
 
 ## ⚙️ What the settings do
 

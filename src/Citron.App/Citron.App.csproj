@@ -12,7 +12,7 @@
     <ImplicitUsings>disable</ImplicitUsings><Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <AssemblyName>Citron</AssemblyName>
-    <Version>0.2.2</Version>
+    <Version>0.3.0</Version>
     <SelfContained>true</SelfContained>
     <PublishTrimmed>true</PublishTrimmed><TrimMode>partial</TrimMode>
     <PublishSingleFile>true</PublishSingleFile>

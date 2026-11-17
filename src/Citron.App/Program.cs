@@ -44,7 +44,7 @@ public sealed partial class CitronApp : Application
     Preferences prefs = new();
     string architecture = "x64";
     bool running, busy, locked, exiting, setupNeeded;
-    DateTimeOffset started, next;
+    DateTimeOffset started, next, nextSessionCheck;
     string? target;
     static string PrefPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Citron", "settings.json");
     [DllImport("kernel32.dll")] static extern uint SetThreadExecutionState(uint flags);
@@ -58,7 +58,7 @@ public sealed partial class CitronApp : Application
         Program.Log("Window created");
         double scale = GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(window)) / 96d;
         var area = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(window.AppWindow.Id, Microsoft.UI.Windowing.DisplayAreaFallback.Primary).WorkArea;
-        window.AppWindow.Resize(new Windows.Graphics.SizeInt32(Math.Min((int)(660 * scale), area.Width), Math.Min((int)(860 * scale), area.Height - 32)));
+        window.AppWindow.Resize(new Windows.Graphics.SizeInt32(Math.Min((int)(600 * scale), area.Width), Math.Min((int)(740 * scale), area.Height - 32)));
         window.AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "Citron.ico"));
         window.ExtendsContentIntoTitleBar = true;
         window.AppWindow.TitleBar.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
@@ -71,14 +71,14 @@ public sealed partial class CitronApp : Application
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += async (_, _) => await Tick();
         timer.Start();
-        window.Activate();
+        if (!Environment.GetCommandLineArgs().Contains("--tray")) window.Activate();
         Program.Log("Window activated");
         _ = Initialize();
     }
     async Task Initialize()
     {
         await Scan();
-        if (!setupNeeded || prefs.SetupPrompted) return;
+        if (!setupNeeded || prefs.SetupPrompted || Environment.GetCommandLineArgs().Contains("--tray")) return;
         prefs.SetupPrompted = true; Save();
         try { await Configure(false); } catch (Exception ex) { await Error(ex.Message); }
     }
@@ -90,16 +90,18 @@ public sealed partial class CitronApp : Application
     }
     void BuildUi()
     {
-        root = new StackPanel { Spacing = 14, Margin = new Thickness(28, 16, 28, 28) };
+        root = new StackPanel { Spacing = 10, Margin = new Thickness(20, 8, 20, 20) };
         var brand = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
-        brand.Children.Add(new Image { Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/Citron.png")), Width = 44, Height = 44 });
-        brand.Children.Add(new TextBlock { Text = "Citron", FontSize = 34, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold }); root.Children.Add(brand);
-        root.Children.Add(new TextBlock { Text = Strings.T("subtitle"), FontSize = 18 });
+        brand.Children.Add(new Image { Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/Citron.png")), Width = 32, Height = 32 });
+        brand.Children.Add(new TextBlock { Text = "Citron", FontSize = 28, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold }); root.Children.Add(brand);
         status = new TextBlock { Text = Strings.T("idle"), TextWrapping = TextWrapping.Wrap, FontSize = 14 };
         root.Children.Add(new Border { Padding = new Thickness(16), CornerRadius = new CornerRadius(12), Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(28, 110, 180, 95)), Child = status });
         sessions = new ComboBox { Header = Strings.T("target"), HorizontalAlignment = HorizontalAlignment.Stretch };
-        root.Children.Add(sessions);
-        Button refresh = Button("refresh", async () => await Scan()); root.Children.Add(refresh);
+        var sessionRow = new Grid { ColumnSpacing = 8 };
+        sessionRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        sessionRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        sessionRow.Children.Add(sessions);
+        Button refresh = Button("refresh", async () => await Scan()); refresh.VerticalAlignment = VerticalAlignment.Bottom; Grid.SetColumn(refresh, 1); sessionRow.Children.Add(refresh); root.Children.Add(sessionRow);
         enabled = new ToggleSwitch { Header = Strings.T("enable"), OnContent = "●", OffContent = "○" };
         enabled.Toggled += (_, _) =>
         {
@@ -109,6 +111,7 @@ public sealed partial class CitronApp : Application
             target = running ? (string)sessions.SelectedItem : null;
             sessions.IsEnabled = !running;
             started = next = DateTimeOffset.UtcNow;
+            nextSessionCheck = DateTimeOffset.UtcNow.Add(SessionPolicy.CheckInterval);
             ApplyWakeRequest();
             status.Text = Strings.T(running ? "active" : "idle");
             tray?.SetActive(running);
@@ -117,31 +120,50 @@ public sealed partial class CitronApp : Application
         interval = new NumberBox { Header = Strings.T("interval"), Minimum = 15, Maximum = 3600, Value = Math.Clamp(prefs.Interval, 15, 3600), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
         duration = new NumberBox { Header = Strings.T("duration"), Minimum = 0, Maximum = 1440, Value = Math.Clamp(prefs.Duration, 0, 1440), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
         interval.ValueChanged += (_, _) => { Save(); Reschedule(); }; duration.ValueChanged += (_, _) => Save();
-        root.Children.Add(interval);
+        var timing = new StackPanel { Spacing = 8 };
+        var numbers = new Grid { ColumnSpacing = 12 };
+        numbers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        numbers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        numbers.Children.Add(interval); Grid.SetColumn(duration, 1); numbers.Children.Add(duration); timing.Children.Add(numbers);
         randomizeInterval = new CheckBox { Content = Strings.T("randomize"), IsChecked = prefs.RandomizeInterval };
         randomizeInterval.Checked += (_, _) => { Save(); Reschedule(); };
         randomizeInterval.Unchecked += (_, _) => { Save(); Reschedule(); };
-        root.Children.Add(randomizeInterval);
-        root.Children.Add(new TextBlock { Text = Strings.T("randomizeHint"), TextWrapping = TextWrapping.Wrap, Opacity = .65, FontSize = 12 });
-        root.Children.Add(duration);
+        timing.Children.Add(randomizeInterval);
+        ToolTipService.SetToolTip(randomizeInterval, Strings.T("randomizeHint"));
+        root.Children.Add(Section("timingSection", timing, true));
+        var power = new StackPanel { Spacing = 8 };
         awake = new CheckBox { Content = Strings.T("sleep"), IsChecked = prefs.KeepAwake };
         displayOn = new CheckBox { Content = Strings.T("displayOn"), IsChecked = prefs.KeepDisplayOn, IsEnabled = prefs.KeepAwake };
         awake.Checked += (_, _) => { Save(); displayOn.IsEnabled = true; ApplyWakeRequest(); };
-        awake.Unchecked += (_, _) => { Save(); displayOn.IsEnabled = false; ApplyWakeRequest(); }; root.Children.Add(awake);
+        awake.Unchecked += (_, _) => { Save(); displayOn.IsEnabled = false; ApplyWakeRequest(); }; power.Children.Add(awake);
         displayOn.Checked += (_, _) => { Save(); ApplyWakeRequest(); };
         displayOn.Unchecked += (_, _) => { Save(); ApplyWakeRequest(); };
-        root.Children.Add(displayOn);
-        root.Children.Add(new TextBlock { Text = Strings.T("wakeHint"), TextWrapping = TextWrapping.Wrap, Opacity = .65, FontSize = 12 });
+        power.Children.Add(displayOn);
+        power.Children.Add(new TextBlock { Text = Strings.T("wakeHint"), TextWrapping = TextWrapping.Wrap, Opacity = .65, FontSize = 12 });
+        root.Children.Add(Section("powerSection", power));
+        var settings = new StackPanel { Spacing = 10 };
         var language = new ComboBox { Header = Strings.T("language"), HorizontalAlignment = HorizontalAlignment.Stretch };
         string[] codes = ["en", "de", "es", "fr", "pt"];
         foreach (string label in new[] { "English", "Deutsch", "Español", "Français", "Português" }) language.Items.Add(label);
         language.SelectedIndex = Math.Max(0, Array.IndexOf(codes, Strings.Language));
         language.SelectionChanged += (_, _) => { enabled.IsOn = false; Strings.Language = codes[language.SelectedIndex]; Save(); BuildUi(); _ = Scan(); };
-        root.Children.Add(language);
+        settings.Children.Add(language);
+        var startup = new CheckBox { Content = Strings.T("startup") };
+        bool changingStartup = false;
+        try { startup.IsChecked = StartupRegistration.IsEnabled(); } catch (Exception ex) { Program.Log(ex.Message); }
+        void ChangeStartup()
+        {
+            if (changingStartup) return;
+            bool desired = startup.IsChecked == true;
+            try { StartupRegistration.SetEnabled(desired); }
+            catch (Exception ex) { changingStartup = true; startup.IsChecked = !desired; changingStartup = false; status.Text = Strings.T("startupFailed") + "\n" + ex.Message; }
+        }
+        startup.Checked += (_, _) => ChangeStartup(); startup.Unchecked += (_, _) => ChangeStartup();
+        ToolTipService.SetToolTip(startup, Strings.T("startupHint")); settings.Children.Add(startup);
         var actions = new StackPanel { Spacing = 8 };
         actions.Children.Add(Button("setup", () => Configure(false)));
-        actions.Children.Add(Button("restore", () => Configure(true))); root.Children.Add(actions);
-        root.Children.Add(new TextBlock { Text = Strings.T("about"), TextWrapping = TextWrapping.Wrap, Opacity = .65, FontSize = 12 });
+        actions.Children.Add(Button("restore", () => Configure(true))); settings.Children.Add(actions);
+        root.Children.Add(Section("settingsSection", settings));
         root.Children.Add(Button("exit", () => { Quit(); return Task.CompletedTask; }));
         var shell = new Grid();
         shell.RowDefinitions.Add(new RowDefinition { Height = new GridLength(48) });
@@ -158,10 +180,11 @@ public sealed partial class CitronApp : Application
     }
     Button Button(string key, Func<Task> action)
     {
-        var button = new Button { Content = Strings.T(key) };
+        var button = new Button { Content = new TextBlock { Text = Strings.T(key), TextWrapping = TextWrapping.Wrap } };
         button.Click += async (_, _) => { button.IsEnabled = false; try { await action(); } catch (Exception ex) { await Error(ex.Message); } finally { button.IsEnabled = true; } };
         return button;
     }
+    static Expander Section(string key, UIElement content, bool expanded = false) => new() { Header = Strings.T(key), Content = content, IsExpanded = expanded, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch };
     void Quit() { exiting = true; timer.Stop(); SetThreadExecutionState(0x80000000); tray.Dispose(); window.Close(); Exit(); }
     void Save()
     {
@@ -236,7 +259,7 @@ public sealed partial class CitronApp : Application
         try
         {
             var check = await Detect();
-            string details = Strings.T("setupText") + "\n\n" + (architecture == "x86" ? @"HKLM\SOFTWARE\WOW6432Node\Citrix\ICA Client\CCM" : @"HKLM\SOFTWARE\Citrix\ICA Client\CCM") + "\n" + check.GetProperty("values").ToString();
+            string details = Strings.T(restore ? "restoreText" : "setupText") + "\n\n" + (architecture == "x86" ? @"HKLM\SOFTWARE\WOW6432Node\Citrix\ICA Client\CCM" : @"HKLM\SOFTWARE\Citrix\ICA Client\CCM") + "\n" + check.GetProperty("values").ToString();
             var dialog = new ContentDialog { XamlRoot = root.XamlRoot, Title = Strings.T(restore ? "restore" : "setup"), Content = new TextBlock { Text = details, TextWrapping = TextWrapping.Wrap }, PrimaryButtonText = Strings.T("continue"), CloseButtonText = Strings.T("cancel"), DefaultButton = ContentDialogButton.Close };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
             using var process = Process.Start(new ProcessStartInfo(Worker, restore ? "restore" : "setup") { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden })!;
@@ -249,19 +272,29 @@ public sealed partial class CitronApp : Application
     }
     async Task Tick()
     {
-        if (!running || busy || locked) return;
+        if (!running || busy) return;
         if (prefs.Duration > 0 && DateTimeOffset.UtcNow - started >= TimeSpan.FromMinutes(prefs.Duration)) { enabled.IsOn = false; return; }
         ApplyWakeRequest();
-        if (DateTimeOffset.UtcNow < next) return;
+        bool pulse = !locked && DateTimeOffset.UtcNow >= next;
+        if (!pulse && DateTimeOffset.UtcNow < nextSessionCheck) return;
         busy = true;
         try
         {
             var pulseStarted = DateTimeOffset.UtcNow;
-            await Run("pulse", target);
-            if (running) status.Text = Strings.T("active") + "\n" + DateTime.Now.ToString("T");
-            next = pulseStarted.Add(ActivityTiming.NextDelay(prefs.Interval, prefs.RandomizeInterval));
+            string? checkedTarget = target;
+            var result = await Run(pulse ? "pulse" : "scan", pulse ? checkedTarget : null);
+            if (!running || target != checkedTarget) return;
+            string[] found = result.GetProperty("sessions").EnumerateArray().Select(s => s.GetString()!).ToArray();
+            sessions.Items.Clear(); foreach (string session in found) sessions.Items.Add(session);
+            nextSessionCheck = DateTimeOffset.UtcNow.Add(SessionPolicy.CheckInterval);
+            if (!SessionPolicy.TargetExists(checkedTarget, found))
+            {
+                enabled.IsOn = false; sessions.SelectedIndex = -1; status.Text = Strings.T("sessionEnded"); return;
+            }
+            sessions.SelectedItem = checkedTarget;
+            if (pulse) { status.Text = Strings.T("active") + "\n" + DateTime.Now.ToString("T"); next = pulseStarted.Add(ActivityTiming.NextDelay(prefs.Interval, prefs.RandomizeInterval)); }
         }
-        catch (Exception ex) { enabled.IsOn = false; status.Text = Strings.T("error") + "\n" + ex.Message; }
+        catch (Exception ex) { enabled.IsOn = false; sessions.Items.Clear(); status.Text = Strings.T("error") + "\n" + ex.Message; }
         finally { busy = false; }
     }
     async Task Error(string message) => await new ContentDialog { XamlRoot = root.XamlRoot, Title = Strings.T("error"), Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap }, CloseButtonText = Strings.T("close") }.ShowAsync();
