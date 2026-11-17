@@ -38,7 +38,7 @@ public sealed partial class CitronApp : Application
     ComboBox sessions = null!;
     ToggleSwitch enabled = null!;
     NumberBox interval = null!, duration = null!;
-    CheckBox awake = null!, randomizeInterval = null!;
+    CheckBox awake = null!, displayOn = null!, randomizeInterval = null!;
     NativeTray tray = null!;
     DispatcherTimer timer = null!;
     Preferences prefs = new();
@@ -109,7 +109,7 @@ public sealed partial class CitronApp : Application
             target = running ? (string)sessions.SelectedItem : null;
             sessions.IsEnabled = !running;
             started = next = DateTimeOffset.UtcNow;
-            if (!running) SetThreadExecutionState(0x80000000);
+            ApplyWakeRequest();
             status.Text = Strings.T(running ? "active" : "idle");
             tray?.SetActive(running);
         };
@@ -125,7 +125,13 @@ public sealed partial class CitronApp : Application
         root.Children.Add(new TextBlock { Text = Strings.T("randomizeHint"), TextWrapping = TextWrapping.Wrap, Opacity = .65, FontSize = 12 });
         root.Children.Add(duration);
         awake = new CheckBox { Content = Strings.T("sleep"), IsChecked = prefs.KeepAwake };
-        awake.Checked += (_, _) => Save(); awake.Unchecked += (_, _) => { Save(); SetThreadExecutionState(0x80000000); }; root.Children.Add(awake);
+        displayOn = new CheckBox { Content = Strings.T("displayOn"), IsChecked = prefs.KeepDisplayOn, IsEnabled = prefs.KeepAwake };
+        awake.Checked += (_, _) => { Save(); displayOn.IsEnabled = true; ApplyWakeRequest(); };
+        awake.Unchecked += (_, _) => { Save(); displayOn.IsEnabled = false; ApplyWakeRequest(); }; root.Children.Add(awake);
+        displayOn.Checked += (_, _) => { Save(); ApplyWakeRequest(); };
+        displayOn.Unchecked += (_, _) => { Save(); ApplyWakeRequest(); };
+        root.Children.Add(displayOn);
+        root.Children.Add(new TextBlock { Text = Strings.T("wakeHint"), TextWrapping = TextWrapping.Wrap, Opacity = .65, FontSize = 12 });
         var language = new ComboBox { Header = Strings.T("language"), HorizontalAlignment = HorizontalAlignment.Stretch };
         string[] codes = ["en", "de", "es", "fr", "pt"];
         foreach (string label in new[] { "English", "Deutsch", "Español", "Français", "Português" }) language.Items.Add(label);
@@ -163,8 +169,15 @@ public sealed partial class CitronApp : Application
         if (double.IsFinite(interval.Value)) prefs.Interval = (int)Math.Clamp(interval.Value, 15, 3600);
         if (double.IsFinite(duration.Value)) prefs.Duration = (int)Math.Clamp(duration.Value, 0, 1440);
         prefs.KeepAwake = awake?.IsChecked == true;
+        prefs.KeepDisplayOn = displayOn?.IsChecked == true;
         prefs.RandomizeInterval = randomizeInterval?.IsChecked == true;
         try { Directory.CreateDirectory(Path.GetDirectoryName(PrefPath)!); File.WriteAllText(PrefPath, JsonSerializer.Serialize(prefs, JsonContext.Default.Preferences)); } catch (Exception ex) { status.Text = ex.Message; }
+    }
+    void ApplyWakeRequest()
+    {
+        uint flags = LocalWakePolicy.Flags(running, locked, prefs.KeepAwake, prefs.KeepDisplayOn);
+        if (SetThreadExecutionState(flags) == 0 && flags != 0x80000000)
+            status.Text = Strings.T("wakeFailed");
     }
     void Reschedule()
     {
@@ -238,7 +251,7 @@ public sealed partial class CitronApp : Application
     {
         if (!running || busy || locked) return;
         if (prefs.Duration > 0 && DateTimeOffset.UtcNow - started >= TimeSpan.FromMinutes(prefs.Duration)) { enabled.IsOn = false; return; }
-        SetThreadExecutionState(prefs.KeepAwake ? 0x80000001 : 0x80000000);
+        ApplyWakeRequest();
         if (DateTimeOffset.UtcNow < next) return;
         busy = true;
         try

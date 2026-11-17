@@ -1,4 +1,4 @@
-# Development status — v0.2.1
+# Development status — v0.2.2
 
 ## Implemented
 
@@ -36,3 +36,7 @@
 The linker reports IL2104 warnings in Microsoft's Windows SDK projection and WinRT runtime assemblies. These warnings are not suppressed. The packaged application's startup and registry/session-enumeration path were smoke-tested; this does not establish that every UI or WinRT path is trim-safe. Citrix helpers are not trimmed.
 
 Commits use repository-local author metadata `ChatGPT <chatgpt@openai.com>`. This does not imply a verified GitHub identity. The repository remains private.
+
+## Local power requests in v0.2.2
+
+The original local wake option only set ES_SYSTEM_REQUIRED; display timeout and Windows locking were allowed. Added a separate persisted, translated screen-on checkbox using ES_DISPLAY_REQUIRED together with ES_SYSTEM_REQUIRED. Requests apply immediately when the options change, only while active and unlocked. Windows API failures are reported in the status. Tests cover system-only/display flags and request release while paused, locked, or disabled. No screen capture or computer control was used for this update. Real laptop display/lock behavior and the new UI layout have not been verified in this update.

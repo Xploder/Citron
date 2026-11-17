@@ -1,5 +1,6 @@
+param([string]$OutputDirectory = (Join-Path $PSScriptRoot 'dist\portable'))
 $ErrorActionPreference = 'Stop'
-$root = Join-Path $PSScriptRoot 'dist\portable'
+$root = $OutputDirectory
 foreach ($arch in @('x64','x86')) {
     $worker = Join-Path $PSScriptRoot ".build\workers\$arch\Citron.Worker.exe"
     $raw = & $worker check
@@ -17,3 +18,4 @@ $files = @(Get-ChildItem $root -Recurse -File)
 if ($files.Count -ne 1 -or $files[0].Name -ne 'Citron.exe') { throw 'Portable output must contain only Citron.exe' }
 if ($files[0].Length -ge 50MB) { throw 'Portable executable exceeded the 50 MiB size budget' }
 Write-Host 'PASS single executable and 50 MiB size budget'
+exit 0

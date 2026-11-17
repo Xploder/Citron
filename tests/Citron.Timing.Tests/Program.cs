@@ -24,6 +24,18 @@ foreach (bool enabled in new[] { false, true })
     Check(JsonSerializer.Deserialize(encoded, JsonContext.Default.Preferences)!.RandomizeInterval == enabled, "The checkbox preference must survive a JSON round trip.");
 }
 Console.WriteLine("PASS fixed timing, jitter bounds/variation/mean, invalid settings, and preference compatibility/persistence.");
+Check(LocalWakePolicy.Flags(true, false, true, false) == 0x80000001, "System-only mode must allow display timeout.");
+Check(LocalWakePolicy.Flags(true, false, true, true) == 0x80000003, "Screen mode must request both system and display.");
+foreach (bool screen in new[] { false, true })
+{
+    Check(LocalWakePolicy.Flags(false, false, true, screen) == 0x80000000, "Paused mode must release the request.");
+    Check(LocalWakePolicy.Flags(true, true, true, screen) == 0x80000000, "Locking must release the request.");
+    Check(LocalWakePolicy.Flags(true, false, false, screen) == 0x80000000, "Disabling local wake must release both requests.");
+}
+Check(!oldSettings.KeepDisplayOn, "Old settings must not implicitly enable the screen request.");
+var displaySettings = JsonSerializer.Serialize(new Preferences { KeepAwake = true, KeepDisplayOn = true }, JsonContext.Default.Preferences);
+Check(JsonSerializer.Deserialize(displaySettings, JsonContext.Default.Preferences)!.KeepDisplayOn, "Screen preference must persist.");
+Console.WriteLine("PASS separate system/display requests, pause/lock/disable release, and screen-preference compatibility/persistence.");
 
 sealed class RejectRandom : Random { public override double NextDouble() => throw new Exception("RNG used in fixed mode."); }
 sealed class FixedRandom(double sample) : Random { public override double NextDouble() => sample; }

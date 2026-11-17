@@ -10,7 +10,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 **WinUI 3 · One EXE · 5 languages · Windows x64 · Experimental preview**
 
-[Download v0.2.1](https://github.com/Xploder/Citron/releases/tag/v0.2.1) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
+[Download v0.2.2](https://github.com/Xploder/Citron/releases/tag/v0.2.2) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
 <img src="docs/screenshot.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
 
@@ -40,7 +40,7 @@ Citron is a native Windows utility designed to send periodic input directly to a
 
 ## 🚀 Getting started
 
-1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.2.1).
+1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.2.2).
 2. Run it from a folder you can keep permanently. No separate .NET 10 or Windows App Runtime installation is needed.
 3. On first launch, review **Set up Citrix access**. Approve the Windows UAC prompt if setup is required.
 4. Connect a session using the native Citrix Workspace client, then select **Find sessions**.
@@ -60,7 +60,8 @@ Citron always starts paused. Closing the settings window keeps it in the tray; *
 - **Interval:** time between attempts, from 15 to 3,600 seconds.
 - **Vary intervals randomly (±10%):** optional and off by default. Each next gap gets a fresh random value; 60 seconds becomes approximately 54–66 seconds. The configured base interval stays unchanged. Turning this off uses the configured interval without intentional variation. Windows scheduling and the one-second polling timer can still introduce small timing delays. This option makes no claim about monitoring-tool classification.
 - **Duration:** automatically pause after the selected number of minutes; 0 means unlimited.
-- **Also keep this PC awake:** prevents automatic local system sleep while enabled. It does not keep the display on, prevent Windows locking, or create local keyboard/mouse activity.
+- **Prevent automatic PC sleep while active:** prevents automatic local system sleep while Citron is active.
+- **Also keep the screen on:** additionally requests that the display remain on. Requires the PC-sleep option and active Citron. This does not override Windows locking policies, manual sleep, or lid-close actions. No local keyboard/mouse input is generated.
 - **Language:** follows the Windows display language initially, falls back to English, and saves your manual selection immediately.
 
 Windows locking pauses simulation and releases the local power request. Unlocking resumes only if the app remains enabled and the duration has not expired. Disconnects or failed calls pause activity with an error.
