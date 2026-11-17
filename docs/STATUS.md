@@ -14,7 +14,8 @@
 - Release compilation and publication of UI, x64 worker, and x86 worker.
 - Read-only detection of Citrix Workspace 26.10.0.12, native x64 ICA COM registration.
 - Both required CCM settings are missing. No registry setup has been performed by the developer.
-- UI starts and renders in German; language picker exposes all five languages.
+- UI starts with the custom title bar and icons; German-to-English switching was verified. The language picker exposes all five languages.
+- First-run setup dialog appears; cancelling it was verified. x86/x64 checks and refusal of unconfigured session access pass verify.ps1.
 - Private GitHub repository created at https://github.com/Xploder/Citron.
 
 ## Acceptance tests still required
@@ -28,3 +29,4 @@
 ## GitHub CLI issue
 
 The browser and GitHub connector authenticate as Xploder. GitHub CLI's separate stored token returns HTTP 401 (Bad credentials). Native Git Credential Manager has no usable credential in the current execution context. Re-authenticate the CLI with `gh auth login -h github.com`, then verify `gh auth status`. Do not copy tokens from browser storage. Repository-local Git author is `ChatGPT <chatgpt@openai.com>`; this metadata does not guarantee association with an official GitHub profile. Source upload remains pending until authenticated Git push is available.
+
