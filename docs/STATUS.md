@@ -56,3 +56,7 @@ Added persisted opt-in discovery every 30 seconds while idle, suspended during a
 ## v0.4.1
 
 Tray single-click toggles activity after the Windows double-click threshold; double-click opens the window and cancels the pending toggle. Duplicate mouse-up/NIN_SELECT messages are coalesced; the trailing double-click release is ignored. Context menu, keyboard activation, Explorer recreation and disposal cancel pending actions. Unit tests cover Windows timing extremes and these event sequences. Native interaction was not visually tested; no screen capture or screenshot update was used.
+
+## v0.4.2
+
+Fixed startup after browser download renaming by setting ProjectPriFileName to resources.pri. MRT otherwise derives the app resource filename from the process name (Microsoft WindowsAppSDK issue #6248). The old v0.4.1 build survived startup under its original name but exited with 0xC000027B when renamed. The new single-file build survived six-second --tray startup checks as Citron.exe, Citron (1).exe, and Citron (2).exe, with fresh UI/tray initialization log entries for each run. Existing unit tests, worker checks, and the single-file size check passed. Output remains one 34.02 MiB EXE. No screen capture or screenshot change was used; visual and live Citrix behavior were not retested for this packaging-only change.

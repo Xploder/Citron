@@ -24,3 +24,7 @@ Cold-start with each settings checkbox both enabled and disabled. Open collapsed
 ## Tray mouse actions (v0.4.1)
 
 Single-click: wait for the Windows double-click threshold and verify exactly one activity toggle, without opening the window. Double-click: verify the window opens and activity remains unchanged, including the final release. Test both active and paused states, no selected session, tray overflow, custom Windows double-click timing, rapid repeated gestures, keyboard activation, context menu, quit with a pending click and Explorer restart. Unit tests cover click-sequence arbitration independently of Win32 callbacks. Native interaction was not recorded or visually tested.
+
+## Renamed single-file downloads (v0.4.2)
+
+With no other Citron instance running and automatic session discovery disabled, copy the published EXE to Citron.exe, Citron (1).exe, and Citron (2).exe in a scratch folder. Start each separately with --tray, wait at least six seconds, and require both a live process and fresh UI created / Tray created entries in the startup log. Stop each test instance before launching the next so the single-instance guard cannot hide failures. These three cases passed locally; v0.4.1 crashed under a renamed filename. No capture was used. Also check an ordinary visible launch and the app icon manually on the target device.

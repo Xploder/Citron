@@ -5,6 +5,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\Citron.ico</ApplicationIcon>
     <AppxGeneratePriEnabled>true</AppxGeneratePriEnabled>
+    <!-- MRT must resolve resources even when a browser renames the downloaded executable. -->
+    <ProjectPriFileName>resources.pri</ProjectPriFileName>
     <EnableMsixTooling>true</EnableMsixTooling>
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType><WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
@@ -12,7 +14,7 @@
     <ImplicitUsings>disable</ImplicitUsings><Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <AssemblyName>Citron</AssemblyName>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <SelfContained>true</SelfContained>
     <PublishTrimmed>true</PublishTrimmed><TrimMode>partial</TrimMode>
     <PublishSingleFile>true</PublishSingleFile>
