@@ -68,3 +68,7 @@ Reversed tray mouse actions: single-click opens the window after the Windows dou
 ## v0.4.4
 
 Added a persisted, default-off Minimize to tray checkbox directly below Start with Windows, translated into all five languages. The existing native window subclass observes WM_SIZE / SIZE_MINIMIZED and queues hiding on the UI thread, checking that the window is still minimized and the tray icon is available. No polling was added. Ordinary minimization stays unchanged when disabled; tray restore and session/power state retain their existing behavior. Existing application policy and click-sequence tests passed. Interactive minimize/restore acceptance remains to be confirmed on the target device. No screen capture or screenshot update was used.
+
+## v0.4.5
+
+Simplified the activity status to Active in all five languages. Removed the permanent independent-delivery-verification caveat from the UI; this is a wording change, with error handling and session monitoring unchanged. The existing timestamp remains. The status describes enabled activity and does not add a new remote delivery acknowledgement. No screenshot update was used.

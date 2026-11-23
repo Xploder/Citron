@@ -10,7 +10,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 **WinUI 3 · One EXE · 5 languages · Windows x64 · Public release**
 
-[Download v0.4.4](https://github.com/Xploder/Citron/releases/tag/v0.4.4) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
+[Download v0.4.5](https://github.com/Xploder/Citron/releases/tag/v0.4.5) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
 <img src="docs/citron-v0.3.0.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
 
@@ -40,7 +40,7 @@ Citron is a native Windows utility designed to send periodic input directly to a
 
 ## 🚀 Getting started
 
-1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.4.4).
+1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.4.5).
 2. Run it from a folder you can keep permanently. No separate .NET 10 or Windows App Runtime installation is needed.
 3. On first launch, review **Set up Citrix access**. Approve the Windows UAC prompt if setup is required.
 4. Connect a session using the native Citrix Workspace client, then select **Find sessions**.
