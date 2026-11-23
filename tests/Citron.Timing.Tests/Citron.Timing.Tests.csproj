@@ -4,6 +4,7 @@
     <Compile Include="..\..\src\Citron.App\ActivityTiming.cs" Link="ActivityTiming.cs" />
     <Compile Include="..\..\src\Citron.App\LocalWakePolicy.cs" Link="LocalWakePolicy.cs" />
     <Compile Include="..\..\src\Citron.App\SessionPolicy.cs" Link="SessionPolicy.cs" />
+    <Compile Include="..\..\src\Citron.App\AutoSessionDiscovery.cs" Link="AutoSessionDiscovery.cs" />
     <Compile Include="..\..\src\Citron.App\StartupRegistration.cs" Link="StartupRegistration.cs" />
     <Compile Include="..\..\src\Citron.App\Preferences.cs" Link="Preferences.cs" />
     <Compile Include="..\..\src\Citron.App\Strings.cs" Link="Strings.cs" />

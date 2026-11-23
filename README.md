@@ -10,7 +10,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 **WinUI 3 · One EXE · 5 languages · Windows x64 · Public release**
 
-[Download v0.3.0](https://github.com/Xploder/Citron/releases/tag/v0.3.0) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
+[Download v0.4.0](https://github.com/Xploder/Citron/releases/tag/v0.4.0) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
 <img src="docs/citron-v0.3.0.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
 
@@ -40,13 +40,13 @@ Citron is a native Windows utility designed to send periodic input directly to a
 
 ## 🚀 Getting started
 
-1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.3.0).
+1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.4.0).
 2. Run it from a folder you can keep permanently. No separate .NET 10 or Windows App Runtime installation is needed.
 3. On first launch, review **Set up Citrix access**. Approve the Windows UAC prompt if setup is required.
 4. Connect a session using the native Citrix Workspace client, then select **Find sessions**.
 5. Select the target, choose an interval/duration, and turn on **Keep session active**.
 
-Citron always starts paused. Closing the settings window keeps it in the tray; **Quit** exits completely. A second launch brings the existing instance forward.
+Citron starts paused unless the optional automatic session discovery is enabled and finds an eligible session. Closing the settings window keeps it in the tray; **Quit** exits completely. A second launch brings the existing instance forward.
 
 ### Requirements
 
@@ -55,10 +55,22 @@ Citron always starts paused. Closing the settings window keeps it in the tray; *
 - .NET Framework 4.7.2 or newer for the tiny Citrix helpers. This is part of the supported Windows baseline; see [Microsoft's version table](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies).
 - Administrator approval only when changing the machine-wide Citrix setup values. The ordinary UI and simulation helpers run unelevated.
 
+## Automatic tray mode (v0.4.0)
+
+Enable **Automatically find and activate Citrix sessions** to search every **30 seconds** while no session is being kept active. This option is off by default and is saved across restarts. Combine it with **Start with Windows** to let Citron wait in the tray after sign-in. If enabled, the automatic option can activate an already-connected session on startup; otherwise startup remains paused.
+
+The first eligible session is selected in ordinal session-ID order. Automatic activation uses the same toggle as manual activation, so interval, randomized timing, duration, local PC wake, display wake, and tray status all apply normally. The 30-second search is suspended during activity; the existing 15-second session-presence watcher takes over. After the session disappears, the app stops activity/releases its power requests and returns to discovery. No automatic activation occurs while Windows is locked.
+
+Manually paused sessions, sessions whose duration expired, and sessions paused after an activity error are excluded from automatic activation until they disappear from a successful session snapshot. New session IDs remain eligible. Turn the automatic option off and on to reset those exclusions. Turning it off stops future discovery, without interrupting activity already running.
+
+Searches run serially with the existing 12-second per-helper timeout. The normal waiting state performs at most two session scans per minute, plus the initial check; component detection is cached after success and retried on failure. No extra discovery workers run while active. This is throttled polling, not a zero-CPU guarantee.
+
+Settings checkboxes now use explicit two-state values and a static checkmark over the native control template, avoiding the AnimatedIcon mark used by WinUI during initial rendering. This addresses the reported initial minus/dash appearance; cold-start, theme, and hover rendering still need visual confirmation on the affected device. No screen recording or new GitHub screenshot was used for this update.
+
 ## New in v0.3.0
 
 - **Start with Windows** is off by default. Under **Settings and Citrix setup**, enable per-user startup using the real portable EXE path. It starts paused in the tray after sign-in. No administrator rights are needed. If you move the EXE, toggle the option off/on to update its path.
-- While active, Citron checks session presence every **15 seconds**, reusing normal activity enumeration. A missing target automatically pauses activity, removes the stale selection, and releases local power requests. Failed checks also pause activity and clear the list. Slow checks may take up to the 12-second deadline. Paused Citron does not poll continuously; workers never overlap.
+- While active, Citron checks session presence every **15 seconds**, reusing normal activity enumeration. A missing target automatically pauses activity, removes the stale selection, and releases local power requests. Failed checks also pause activity and clear the list. Slow checks may take up to the 12-second deadline. Paused Citron only searches when optional auto-discovery is enabled; workers never overlap.
 - A local read-only scan measured approximately **402 ms elapsed / 297 ms CPU**. Costs vary by machine and Citrix client.
 - The smaller window groups controls into expandable **Timing**, **PC and display**, and **Settings and Citrix setup** sections, with interval/duration side by side. The screenshot above shows the compact v0.3.0 layout in English.
 - **Restore Citrix registry backup from before Citron setup** restores the backed-up registry values, not interval/language or other app preferences. The confirmation explains this distinction.

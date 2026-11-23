@@ -44,6 +44,30 @@ Check(SessionPolicy.CheckInterval == TimeSpan.FromSeconds(15), "Presence polling
 var executable = @"C:\Program Files\Citron\Citron.exe";
 Check(StartupRegistration.Command(executable) == "\"" + executable + "\" --tray", "Startup must quote the real portable executable and request tray mode.");
 Console.WriteLine("PASS session disappearance/selection isolation, polling cadence, and quoted startup command.");
+var discovery = new AutoSessionDiscovery();
+var now = DateTimeOffset.UtcNow;
+Check(!oldSettings.AutoDiscoverSessions, "Old settings must not enable automatic input.");
+Check(!discovery.IsDue(false, false, false, false, now), "Disabled discovery must never poll.");
+Check(discovery.IsDue(true, false, false, false, now), "Enabled idle discovery must be immediately eligible.");
+discovery.Schedule(now);
+Check(!discovery.IsDue(true, false, false, false, now.AddSeconds(29)), "Discovery must be throttled.");
+Check(discovery.IsDue(true, false, false, false, now.AddSeconds(30)), "Discovery must resume after 30 seconds.");
+Check(!discovery.IsDue(true, true, false, false, now.AddMinutes(1)), "Running activity must suspend discovery.");
+Check(!discovery.IsDue(true, false, true, false, now.AddMinutes(1)), "Workers must not overlap.");
+Check(!discovery.IsDue(true, false, false, true, now.AddMinutes(1)), "Locked Windows must not auto-activate.");
+Check(discovery.SelectTarget(Array.Empty<string>()) == null, "An empty search must not activate.");
+Check(discovery.SelectTarget(new[] { "b", "a" }) == "a", "Multiple sessions need deterministic selection.");
+discovery.Suppress("a");
+Check(discovery.SelectTarget(new[] { "a" }) == null, "Manual pause or duration expiry must not immediately restart the same session.");
+Check(discovery.SelectTarget(new[] { "a", "b" }) == "b", "A new eligible session must remain discoverable.");
+discovery.SelectTarget(Array.Empty<string>());
+Check(discovery.SelectTarget(new[] { "a" }) == "a", "A session that disappears may be rediscovered.");
+discovery.Suppress("a"); discovery.Reset();
+Check(discovery.SelectTarget(new[] { "a" }) == "a", "Explicitly resetting auto mode must allow another attempt.");
+var autoSettings = JsonSerializer.Serialize(new Preferences { AutoDiscoverSessions = true, KeepAwake = true, KeepDisplayOn = true }, JsonContext.Default.Preferences);
+var restoredAuto = JsonSerializer.Deserialize(autoSettings, JsonContext.Default.Preferences)!;
+Check(restoredAuto.AutoDiscoverSessions && restoredAuto.KeepAwake && restoredAuto.KeepDisplayOn, "Automatic and power options must persist together.");
+Console.WriteLine("PASS opt-in auto-discovery, 30-second cadence, active/busy/lock suspension, deterministic selection, pause/expiry suppression, rediscovery and persistence.");
 
 sealed class RejectRandom : Random { public override double NextDouble() => throw new Exception("RNG used in fixed mode."); }
 sealed class FixedRandom(double sample) : Random { public override double NextDouble() => sample; }

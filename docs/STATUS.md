@@ -1,4 +1,4 @@
-# Development status — v0.3.0
+# Development status — v0.4.0
 
 ## Implemented
 
@@ -48,3 +48,7 @@ The maintainer reported successful use of the screen-on option on a laptop and c
 ## v0.3.0
 
 Added opt-in per-user Windows Run registration using the real executable path and --tray. Autostart remains paused and skips setup popups. Active session presence is checked every 15 seconds, reusing pulse enumeration. A missing target or failed check pauses activity, clears stale selection, and releases wake requests. Tests cover target disappearance, unrelated sessions, polling cadence, and quoted startup command. A local scan measured 402 ms elapsed / 297 ms CPU. Compact expandable sections and explicit registry-backup restoration wording replace the long flat layout. No screenshot was captured or replaced. Actual Windows sign-in startup, the new layout, and live-session termination require user validation.
+
+## v0.4.0
+
+Added persisted opt-in discovery every 30 seconds while idle, suspended during activity and lock. Automatic activation uses the existing UI toggle/power path. Deterministic target selection and pause/expiry suppression prevent immediate reactivation after a manual stop. Tests cover opt-in defaults, cadence, active/busy/lock guards, empty/multiple-session snapshots, manual suppression, disappearance, explicit reset, and persistence of auto/power options. All settings checkboxes use a two-state native subclass with a static checkmark; WinUI AnimatedIcon mark rendering is removed. The root cause was not reproduced on-screen; this is a targeted workaround based on the installed WinUI template and the reported hover-dependent symptom. No screen capture or UI control was used. End-to-end automatic activation and the visual checkbox fix remain to be confirmed on the affected device.

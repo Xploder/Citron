@@ -38,10 +38,12 @@ public sealed partial class CitronApp : Application
     ComboBox sessions = null!;
     ToggleSwitch enabled = null!;
     NumberBox interval = null!, duration = null!;
-    CheckBox awake = null!, displayOn = null!, randomizeInterval = null!;
+    CheckBox awake = null!, displayOn = null!, randomizeInterval = null!, autoDiscover = null!;
     NativeTray tray = null!;
     DispatcherTimer timer = null!;
     Preferences prefs = new();
+    readonly AutoSessionDiscovery discovery = new();
+    bool backendReady;
     string architecture = "x64";
     bool running, busy, locked, exiting, setupNeeded;
     DateTimeOffset started, next, nextSessionCheck;
@@ -86,7 +88,7 @@ public sealed partial class CitronApp : Application
     {
         locked = isLocked;
         if (locked) { SetThreadExecutionState(0x80000000); status.Text = Strings.T("locked"); }
-        else next = DateTimeOffset.UtcNow;
+        else { next = DateTimeOffset.UtcNow; discovery.RequestSearch(); }
     }
     void BuildUi()
     {
@@ -105,6 +107,7 @@ public sealed partial class CitronApp : Application
         enabled = new ToggleSwitch { Header = Strings.T("enable"), OnContent = "●", OffContent = "○" };
         enabled.Toggled += (_, _) =>
         {
+            if (!enabled.IsOn) { discovery.Suppress(target); discovery.Schedule(DateTimeOffset.UtcNow); }
             running = enabled.IsOn && sessions.SelectedItem is string;
             if (busy && enabled.IsOn) { enabled.IsOn = false; return; }
             if (enabled.IsOn && !running) { enabled.IsOn = false; status.Text = Strings.T("none"); return; }
@@ -117,6 +120,10 @@ public sealed partial class CitronApp : Application
             tray?.SetActive(running);
         };
         root.Children.Add(enabled);
+        autoDiscover = new SettingsCheckBox { Content = Strings.T("autoDiscover"), IsChecked = prefs.AutoDiscoverSessions };
+        void ChangeDiscovery() { Save(); discovery.Reset(); }
+        autoDiscover.Checked += (_, _) => ChangeDiscovery(); autoDiscover.Unchecked += (_, _) => ChangeDiscovery();
+        ToolTipService.SetToolTip(autoDiscover, Strings.T("autoDiscoverHint")); root.Children.Add(autoDiscover);
         interval = new NumberBox { Header = Strings.T("interval"), Minimum = 15, Maximum = 3600, Value = Math.Clamp(prefs.Interval, 15, 3600), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
         duration = new NumberBox { Header = Strings.T("duration"), Minimum = 0, Maximum = 1440, Value = Math.Clamp(prefs.Duration, 0, 1440), SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
         interval.ValueChanged += (_, _) => { Save(); Reschedule(); }; duration.ValueChanged += (_, _) => Save();
@@ -125,15 +132,15 @@ public sealed partial class CitronApp : Application
         numbers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         numbers.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         numbers.Children.Add(interval); Grid.SetColumn(duration, 1); numbers.Children.Add(duration); timing.Children.Add(numbers);
-        randomizeInterval = new CheckBox { Content = Strings.T("randomize"), IsChecked = prefs.RandomizeInterval };
+        randomizeInterval = new SettingsCheckBox { Content = Strings.T("randomize"), IsChecked = prefs.RandomizeInterval };
         randomizeInterval.Checked += (_, _) => { Save(); Reschedule(); };
         randomizeInterval.Unchecked += (_, _) => { Save(); Reschedule(); };
         timing.Children.Add(randomizeInterval);
         ToolTipService.SetToolTip(randomizeInterval, Strings.T("randomizeHint"));
         root.Children.Add(Section("timingSection", timing, true));
         var power = new StackPanel { Spacing = 8 };
-        awake = new CheckBox { Content = Strings.T("sleep"), IsChecked = prefs.KeepAwake };
-        displayOn = new CheckBox { Content = Strings.T("displayOn"), IsChecked = prefs.KeepDisplayOn, IsEnabled = prefs.KeepAwake };
+        awake = new SettingsCheckBox { Content = Strings.T("sleep"), IsChecked = prefs.KeepAwake };
+        displayOn = new SettingsCheckBox { Content = Strings.T("displayOn"), IsChecked = prefs.KeepDisplayOn, IsEnabled = prefs.KeepAwake };
         awake.Checked += (_, _) => { Save(); displayOn.IsEnabled = true; ApplyWakeRequest(); };
         awake.Unchecked += (_, _) => { Save(); displayOn.IsEnabled = false; ApplyWakeRequest(); }; power.Children.Add(awake);
         displayOn.Checked += (_, _) => { Save(); ApplyWakeRequest(); };
@@ -148,7 +155,7 @@ public sealed partial class CitronApp : Application
         language.SelectedIndex = Math.Max(0, Array.IndexOf(codes, Strings.Language));
         language.SelectionChanged += (_, _) => { enabled.IsOn = false; Strings.Language = codes[language.SelectedIndex]; Save(); BuildUi(); _ = Scan(); };
         settings.Children.Add(language);
-        var startup = new CheckBox { Content = Strings.T("startup") };
+        var startup = new SettingsCheckBox { Content = Strings.T("startup") };
         bool changingStartup = false;
         try { startup.IsChecked = StartupRegistration.IsEnabled(); } catch (Exception ex) { Program.Log(ex.Message); }
         void ChangeStartup()
@@ -194,6 +201,7 @@ public sealed partial class CitronApp : Application
         prefs.KeepAwake = awake?.IsChecked == true;
         prefs.KeepDisplayOn = displayOn?.IsChecked == true;
         prefs.RandomizeInterval = randomizeInterval?.IsChecked == true;
+        prefs.AutoDiscoverSessions = autoDiscover?.IsChecked == true;
         try { Directory.CreateDirectory(Path.GetDirectoryName(PrefPath)!); File.WriteAllText(PrefPath, JsonSerializer.Serialize(prefs, JsonContext.Default.Preferences)); } catch (Exception ex) { status.Text = ex.Message; }
     }
     void ApplyWakeRequest()
@@ -237,25 +245,38 @@ public sealed partial class CitronApp : Application
         Program.Log("Scan requested");
         if (busy || running) return;
         busy = true;
+        string? candidate = null;
+        discovery.Schedule(DateTimeOffset.UtcNow);
         try
         {
             sessions.Items.Clear();
-            var check = await Detect();
-            Program.Log("Component detected");
-            setupNeeded = !check.GetProperty("configured").GetBoolean();
-            if (setupNeeded) { status.Text = Strings.T("setupNeeded"); return; }
+            if (!backendReady)
+            {
+                var check = await Detect();
+                Program.Log("Component detected");
+                setupNeeded = !check.GetProperty("configured").GetBoolean();
+                if (setupNeeded) { status.Text = Strings.T("setupNeeded"); return; }
+                backendReady = true;
+            }
             var result = await Run("scan");
-            foreach (var s in result.GetProperty("sessions").EnumerateArray()) sessions.Items.Add(s.GetString()!);
+            var found = result.GetProperty("sessions").EnumerateArray().Select(s => s.GetString()!).ToArray();
+            foreach (string s in found) sessions.Items.Add(s);
+            candidate = discovery.SelectTarget(found);
             if (sessions.Items.Count > 0) { sessions.SelectedIndex = 0; status.Text = Strings.T("idle"); }
-            else status.Text = Strings.T("none");
+            else status.Text = Strings.T(prefs.AutoDiscoverSessions ? "autoWaiting" : "none");
         }
-        catch (Exception ex) { status.Text = Strings.T("error") + "\n" + ex.Message; }
+        catch (Exception ex) { backendReady = false; status.Text = Strings.T("error") + "\n" + ex.Message; }
         finally { busy = false; }
+        if (prefs.AutoDiscoverSessions && !running && !locked && candidate != null && !exiting)
+        {
+            sessions.SelectedItem = candidate;
+            enabled.IsOn = true;
+        }
     }
     async Task Configure(bool restore)
     {
         if (busy) return;
-        enabled.IsOn = false; busy = true;
+        enabled.IsOn = false; busy = true; backendReady = false;
         try
         {
             var check = await Detect();
@@ -272,6 +293,11 @@ public sealed partial class CitronApp : Application
     }
     async Task Tick()
     {
+        if (!running)
+        {
+            if (discovery.IsDue(prefs.AutoDiscoverSessions, running, busy, locked, DateTimeOffset.UtcNow)) await Scan();
+            return;
+        }
         if (!running || busy) return;
         if (prefs.Duration > 0 && DateTimeOffset.UtcNow - started >= TimeSpan.FromMinutes(prefs.Duration)) { enabled.IsOn = false; return; }
         ApplyWakeRequest();
@@ -289,6 +315,7 @@ public sealed partial class CitronApp : Application
             nextSessionCheck = DateTimeOffset.UtcNow.Add(SessionPolicy.CheckInterval);
             if (!SessionPolicy.TargetExists(checkedTarget, found))
             {
+                discovery.SelectTarget(found); // Remove suppression for sessions that disappeared.
                 enabled.IsOn = false; sessions.SelectedIndex = -1; status.Text = Strings.T("sessionEnded"); return;
             }
             sessions.SelectedItem = checkedTarget;

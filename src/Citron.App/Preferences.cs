@@ -8,4 +8,5 @@ internal sealed class Preferences
     public bool KeepDisplayOn { get; set; }
     public bool SetupPrompted { get; set; }
     public bool RandomizeInterval { get; set; }
+    public bool AutoDiscoverSessions { get; set; }
 }
