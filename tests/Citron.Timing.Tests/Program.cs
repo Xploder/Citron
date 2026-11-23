@@ -75,10 +75,10 @@ foreach (uint delay in new uint[] { 1, 500, 5000 })
     Check(clicks.QueueSingle(100, delay), "First mouse release must schedule one single-click action.");
     Check(!clicks.QueueSingle(100, delay), "Mouse-up and NIN_SELECT aliases must not schedule twice.");
     Check(!clicks.ConsumeSingle(100 + delay - 1), "Single click must wait for the system double-click time.");
-    Check(clicks.ConsumeSingle(100 + delay) && !clicks.ConsumeSingle(100 + delay + 1), "Single click must toggle exactly once.");
+    Check(clicks.ConsumeSingle(100 + delay) && !clicks.ConsumeSingle(100 + delay + 1), "Single click must open exactly once.");
     clicks.ButtonDown(); clicks.QueueSingle(10000, delay); clicks.DoubleClick();
-    Check(!clicks.QueueSingle(10001, delay), "The final double-click release must not schedule a toggle.");
-    Check(!clicks.ConsumeSingle(10000 + delay + 100), "Double click must cancel the pending toggle.");
+    Check(!clicks.QueueSingle(10001, delay), "The final double-click release must not schedule opening the window.");
+    Check(!clicks.ConsumeSingle(10000 + delay + 100), "Double click must cancel the pending window opening.");
     clicks.ButtonDown(); Check(clicks.QueueSingle(20000, delay), "A subsequent mouse gesture must work after a double click.");
     clicks.Cancel(); Check(!clicks.ConsumeSingle(20000 + delay), "Context menu, keyboard activation, or disposal must cancel pending clicks.");
 }

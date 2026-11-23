@@ -21,9 +21,9 @@ With auto-discovery disabled, verify that no periodic idle searches occur. Enabl
 
 Cold-start with each settings checkbox both enabled and disabled. Open collapsed sections without hovering any checkbox: verify checkmarks are present immediately, empty boxes stay empty, keyboard/space toggling works, disabled controls remain disabled, and light/dark/high-contrast themes keep adequate colors. The workaround retains the native CheckBox template and semantics while replacing its animated mark. No screenshot or screen capture was used to validate this change.
 
-## Tray mouse actions (v0.4.1)
+## Tray mouse actions (v0.4.3)
 
-Single-click: wait for the Windows double-click threshold and verify exactly one activity toggle, without opening the window. Double-click: verify the window opens and activity remains unchanged, including the final release. Test both active and paused states, no selected session, tray overflow, custom Windows double-click timing, rapid repeated gestures, keyboard activation, context menu, quit with a pending click and Explorer restart. Unit tests cover click-sequence arbitration independently of Win32 callbacks. Native interaction was not recorded or visually tested.
+Single-click: wait for the Windows double-click threshold and verify the window opens without changing activity. Double-click: verify exactly one activity toggle without opening the window, including the final release. Test both active and paused states, no selected session, tray overflow, custom Windows double-click timing, rapid repeated gestures, keyboard activation, context menu, quit with a pending click and Explorer restart. Unit tests cover click-sequence arbitration independently of Win32 callbacks. Native interaction was not recorded or visually tested.
 
 ## Renamed single-file downloads (v0.4.2)
 

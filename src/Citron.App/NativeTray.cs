@@ -22,7 +22,7 @@ public sealed class NativeTray : IDisposable
     public NativeTray(IntPtr window, Action show, Action toggle, Action<bool> sessionLock, Action quit)
     {
         hwnd = window; this.show = show; this.toggle = toggle; this.sessionLock = sessionLock; this.quit = quit;
-        clickTimer.Tick += (_, _) => { clickTimer.Stop(); if (clicks.ConsumeSingle(Environment.TickCount64)) toggle(); };
+        clickTimer.Tick += (_, _) => { clickTimer.Stop(); if (clicks.ConsumeSingle(Environment.TickCount64)) show(); };
         icon = LoadImage(IntPtr.Zero, Path.Combine(AppContext.BaseDirectory, "Assets", "CitronPaused.ico"), 1, 32, 32, 0x10);
         proc = WndProc;
         if (!SetWindowSubclass(hwnd, proc, 1, UIntPtr.Zero)) throw new InvalidOperationException("Could not initialize the tray window.");
@@ -45,7 +45,7 @@ public sealed class NativeTray : IDisposable
                 uint delay = Math.Max(1u, GetDoubleClickTime());
                 if (clicks.QueueSingle(Environment.TickCount64, delay)) { clickTimer.Interval = TimeSpan.FromMilliseconds(delay + 20); clickTimer.Start(); }
             }
-            else if (notification == 0x0203) { clickTimer.Stop(); clicks.DoubleClick(); show(); }
+            else if (notification == 0x0203) { clickTimer.Stop(); clicks.DoubleClick(); toggle(); }
             else if (notification == 0x0401) { CancelClick(); show(); }
             else if (notification == 0x0205 || notification == 0x007B)
             {
