@@ -68,6 +68,21 @@ var autoSettings = JsonSerializer.Serialize(new Preferences { AutoDiscoverSessio
 var restoredAuto = JsonSerializer.Deserialize(autoSettings, JsonContext.Default.Preferences)!;
 Check(restoredAuto.AutoDiscoverSessions && restoredAuto.KeepAwake && restoredAuto.KeepDisplayOn, "Automatic and power options must persist together.");
 Console.WriteLine("PASS opt-in auto-discovery, 30-second cadence, active/busy/lock suspension, deterministic selection, pause/expiry suppression, rediscovery and persistence.");
+foreach (uint delay in new uint[] { 1, 500, 5000 })
+{
+    var clicks = new TrayClickSequence();
+    clicks.ButtonDown();
+    Check(clicks.QueueSingle(100, delay), "First mouse release must schedule one single-click action.");
+    Check(!clicks.QueueSingle(100, delay), "Mouse-up and NIN_SELECT aliases must not schedule twice.");
+    Check(!clicks.ConsumeSingle(100 + delay - 1), "Single click must wait for the system double-click time.");
+    Check(clicks.ConsumeSingle(100 + delay) && !clicks.ConsumeSingle(100 + delay + 1), "Single click must toggle exactly once.");
+    clicks.ButtonDown(); clicks.QueueSingle(10000, delay); clicks.DoubleClick();
+    Check(!clicks.QueueSingle(10001, delay), "The final double-click release must not schedule a toggle.");
+    Check(!clicks.ConsumeSingle(10000 + delay + 100), "Double click must cancel the pending toggle.");
+    clicks.ButtonDown(); Check(clicks.QueueSingle(20000, delay), "A subsequent mouse gesture must work after a double click.");
+    clicks.Cancel(); Check(!clicks.ConsumeSingle(20000 + delay), "Context menu, keyboard activation, or disposal must cancel pending clicks.");
+}
+Console.WriteLine("PASS single/double-click arbitration, notification deduplication, trailing-release suppression, cancellation and Windows timing bounds.");
 
 sealed class RejectRandom : Random { public override double NextDouble() => throw new Exception("RNG used in fixed mode."); }
 sealed class FixedRandom(double sample) : Random { public override double NextDouble() => sample; }

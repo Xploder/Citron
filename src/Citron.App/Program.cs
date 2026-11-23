@@ -68,7 +68,7 @@ public sealed partial class CitronApp : Application
         window.AppWindow.Closing += (_, e) => { if (!exiting) { e.Cancel = true; window.AppWindow.Hide(); } };
         BuildUi();
         Program.Log("UI created");
-        tray = new NativeTray(WinRT.Interop.WindowNative.GetWindowHandle(window), () => { tray?.Show(); window.Activate(); }, () => { if (!running && sessions.SelectedItem == null) window.Activate(); else enabled.IsOn = !running; }, OnSessionLock, Quit);
+        tray = new NativeTray(WinRT.Interop.WindowNative.GetWindowHandle(window), () => { tray?.Show(); window.Activate(); }, () => enabled.IsOn = !running, OnSessionLock, Quit);
         Program.Log("Tray created");
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += async (_, _) => await Tick();

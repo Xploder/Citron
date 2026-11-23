@@ -10,7 +10,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 **WinUI 3 · One EXE · 5 languages · Windows x64 · Public release**
 
-[Download v0.4.0](https://github.com/Xploder/Citron/releases/tag/v0.4.0) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
+[Download v0.4.1](https://github.com/Xploder/Citron/releases/tag/v0.4.1) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
 <img src="docs/citron-v0.3.0.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
 
@@ -29,7 +29,7 @@ Citron is a native Windows utility designed to send periodic input directly to a
 | | What you get |
 | --- | --- |
 | 🎯 Session selection | Choose one detected Citrix session rather than broadcasting to every session |
-| 🍋 System tray | Double-click to enable/pause; right-click for quick actions |
+| 🍋 System tray | Single-click to enable/pause; double-click to open; right-click for quick actions |
 | ⏱️ Timing | Adjustable interval and optional duration limit |
 | 🖥️ Local wake option | Optionally prevent automatic sleep on this PC without local key presses |
 | 🔐 Guided setup | Review the required registry values, approve UAC, and restore previous settings later |
@@ -40,7 +40,7 @@ Citron is a native Windows utility designed to send periodic input directly to a
 
 ## 🚀 Getting started
 
-1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.4.0).
+1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.4.1).
 2. Run it from a folder you can keep permanently. No separate .NET 10 or Windows App Runtime installation is needed.
 3. On first launch, review **Set up Citrix access**. Approve the Windows UAC prompt if setup is required.
 4. Connect a session using the native Citrix Workspace client, then select **Find sessions**.
@@ -54,6 +54,8 @@ Citron starts paused unless the optional automatic session discovery is enabled 
 - Native Citrix Workspace with a registered ICA Client Object component. HTML5/browser-only sessions and the Microsoft Store SDK variant are not supported by this backend.
 - .NET Framework 4.7.2 or newer for the tiny Citrix helpers. This is part of the supported Windows baseline; see [Microsoft's version table](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies).
 - Administrator approval only when changing the machine-wide Citrix setup values. The ordinary UI and simulation helpers run unelevated.
+
+A single left-click waits for the Windows double-click interval before toggling, so a double-click opens the window without also changing activity. Pending actions are cancelled on context menu, keyboard activation, quitting, or tray recreation.
 
 ## Automatic tray mode (v0.4.0)
 

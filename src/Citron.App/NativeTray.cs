@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using static Citron.Strings;
 using System.Runtime.InteropServices;
+using Microsoft.UI.Xaml;
 
 namespace Citron;
 
@@ -16,9 +17,12 @@ public sealed class NativeTray : IDisposable
     private bool added;
     private IntPtr icon;
     private readonly uint taskbarCreated = RegisterWindowMessage("TaskbarCreated");
+    private readonly TrayClickSequence clicks = new();
+    private readonly DispatcherTimer clickTimer = new();
     public NativeTray(IntPtr window, Action show, Action toggle, Action<bool> sessionLock, Action quit)
     {
         hwnd = window; this.show = show; this.toggle = toggle; this.sessionLock = sessionLock; this.quit = quit;
+        clickTimer.Tick += (_, _) => { clickTimer.Stop(); if (clicks.ConsumeSingle(Environment.TickCount64)) toggle(); };
         icon = LoadImage(IntPtr.Zero, Path.Combine(AppContext.BaseDirectory, "Assets", "CitronPaused.ico"), 1, 32, 32, 0x10);
         proc = WndProc;
         if (!SetWindowSubclass(hwnd, proc, 1, UIntPtr.Zero)) throw new InvalidOperationException("Could not initialize the tray window.");
@@ -30,15 +34,22 @@ public sealed class NativeTray : IDisposable
     private IntPtr WndProc(IntPtr h, uint message, UIntPtr w, IntPtr l, UIntPtr id, UIntPtr data)
     {
         if (message == 0x02B1) { if (w.ToUInt64() == 7) sessionLock(true); if (w.ToUInt64() == 8) sessionLock(false); }
-        if (message == taskbarCreated) { Add(); return IntPtr.Zero; }
+        if (message == taskbarCreated) { CancelClick(); Add(); return IntPtr.Zero; }
         if (message == 0x8002) { show(); return IntPtr.Zero; }
         if (message == Callback)
         {
             uint notification = (uint)(l.ToInt64() & 0xFFFF);
-            if (notification == 0x0203) toggle();
-            else if (notification == 0x0401) show();
+            if (notification == 0x0201) clicks.ButtonDown();
+            else if (notification == 0x0202 || notification == 0x0400)
+            {
+                uint delay = Math.Max(1u, GetDoubleClickTime());
+                if (clicks.QueueSingle(Environment.TickCount64, delay)) { clickTimer.Interval = TimeSpan.FromMilliseconds(delay + 20); clickTimer.Start(); }
+            }
+            else if (notification == 0x0203) { clickTimer.Stop(); clicks.DoubleClick(); show(); }
+            else if (notification == 0x0401) { CancelClick(); show(); }
             else if (notification == 0x0205 || notification == 0x007B)
             {
+                CancelClick();
                 IntPtr menu = CreatePopupMenu();
                 try
                 {
@@ -65,7 +76,9 @@ public sealed class NativeTray : IDisposable
     public void Hide() { if (added) ShowWindow(hwnd, 0); }
     public void Show() { ShowWindow(hwnd, 9); SetForegroundWindow(hwnd); }
     public void SetActive(bool active) { var next = LoadImage(IntPtr.Zero, Path.Combine(AppContext.BaseDirectory, "Assets", active ? "Citron.ico" : "CitronPaused.ico"), 1, 32, 32, 0x10); if (next == IntPtr.Zero) return; var old = icon; icon = next; var data = Data(); Shell_NotifyIcon(1, ref data); if (old != IntPtr.Zero) DestroyIcon(old); }
-    public void Dispose() { WTSUnRegisterSessionNotification(hwnd); var data = Data(); if (added) Shell_NotifyIcon(2, ref data); RemoveWindowSubclass(hwnd, proc, 1); if (icon != IntPtr.Zero) DestroyIcon(icon); added = false; }
+    void CancelClick() { clickTimer.Stop(); clicks.Cancel(); }
+    public void Dispose() { CancelClick(); WTSUnRegisterSessionNotification(hwnd); var data = Data(); if (added) Shell_NotifyIcon(2, ref data); RemoveWindowSubclass(hwnd, proc, 1); if (icon != IntPtr.Zero) DestroyIcon(icon); added = false; }
+    [DllImport("user32.dll")] private static extern uint GetDoubleClickTime();
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)] private struct NotifyData
     {
         public uint Size; public IntPtr Window; public uint Id; public uint Flags; public uint Callback; public IntPtr Icon;

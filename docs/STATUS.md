@@ -1,4 +1,4 @@
-# Development status — v0.4.0
+# Development status — v0.4.1
 
 ## Implemented
 
@@ -52,3 +52,7 @@ Added opt-in per-user Windows Run registration using the real executable path an
 ## v0.4.0
 
 Added persisted opt-in discovery every 30 seconds while idle, suspended during activity and lock. Automatic activation uses the existing UI toggle/power path. Deterministic target selection and pause/expiry suppression prevent immediate reactivation after a manual stop. Tests cover opt-in defaults, cadence, active/busy/lock guards, empty/multiple-session snapshots, manual suppression, disappearance, explicit reset, and persistence of auto/power options. All settings checkboxes use a two-state native subclass with a static checkmark; WinUI AnimatedIcon mark rendering is removed. The root cause was not reproduced on-screen; this is a targeted workaround based on the installed WinUI template and the reported hover-dependent symptom. No screen capture or UI control was used. End-to-end automatic activation and the visual checkbox fix remain to be confirmed on the affected device.
+
+## v0.4.1
+
+Tray single-click toggles activity after the Windows double-click threshold; double-click opens the window and cancels the pending toggle. Duplicate mouse-up/NIN_SELECT messages are coalesced; the trailing double-click release is ignored. Context menu, keyboard activation, Explorer recreation and disposal cancel pending actions. Unit tests cover Windows timing extremes and these event sequences. Native interaction was not visually tested; no screen capture or screenshot update was used.
