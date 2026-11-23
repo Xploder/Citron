@@ -68,7 +68,7 @@ public sealed partial class CitronApp : Application
         window.AppWindow.Closing += (_, e) => { if (!exiting) { e.Cancel = true; window.AppWindow.Hide(); } };
         BuildUi();
         Program.Log("UI created");
-        tray = new NativeTray(WinRT.Interop.WindowNative.GetWindowHandle(window), () => { tray?.Show(); window.Activate(); }, () => enabled.IsOn = !running, OnSessionLock, Quit);
+        tray = new NativeTray(WinRT.Interop.WindowNative.GetWindowHandle(window), () => { tray?.Show(); window.Activate(); }, () => enabled.IsOn = !running, OnSessionLock, OnMinimized, Quit);
         Program.Log("Tray created");
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         timer.Tick += async (_, _) => await Tick();
@@ -89,6 +89,17 @@ public sealed partial class CitronApp : Application
         locked = isLocked;
         if (locked) { SetThreadExecutionState(0x80000000); status.Text = Strings.T("locked"); }
         else { next = DateTimeOffset.UtcNow; discovery.RequestSearch(); }
+    }
+    void OnMinimized()
+    {
+        // Let Windows finish minimizing before hiding; a quick restore must remain visible.
+        window.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (!exiting && prefs.MinimizeToTray && tray.IsAvailable &&
+                window.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter &&
+                presenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
+                tray.Hide();
+        });
     }
     void BuildUi()
     {
@@ -167,6 +178,10 @@ public sealed partial class CitronApp : Application
         }
         startup.Checked += (_, _) => ChangeStartup(); startup.Unchecked += (_, _) => ChangeStartup();
         ToolTipService.SetToolTip(startup, Strings.T("startupHint")); settings.Children.Add(startup);
+        var minimizeToTray = new SettingsCheckBox { Content = Strings.T("minimizeToTray"), IsChecked = prefs.MinimizeToTray };
+        void ChangeMinimizeToTray() { prefs.MinimizeToTray = minimizeToTray.IsChecked == true; Save(); }
+        minimizeToTray.Checked += (_, _) => ChangeMinimizeToTray(); minimizeToTray.Unchecked += (_, _) => ChangeMinimizeToTray();
+        settings.Children.Add(minimizeToTray);
         var actions = new StackPanel { Spacing = 8 };
         actions.Children.Add(Button("setup", () => Configure(false)));
         actions.Children.Add(Button("restore", () => Configure(true))); settings.Children.Add(actions);

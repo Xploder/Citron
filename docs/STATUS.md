@@ -64,3 +64,7 @@ Fixed startup after browser download renaming by setting ProjectPriFileName to r
 ## v0.4.3
 
 Reversed tray mouse actions: single-click opens the window after the Windows double-click threshold; double-click starts/pauses activity and cancels the pending window opening. Keyboard activation still opens the window. Updated all five translated help texts and the README. Existing click-sequence and application policy tests passed. Native tray interaction was not visually tested; no screen capture or screenshot update was used.
+
+## v0.4.4
+
+Added a persisted, default-off Minimize to tray checkbox directly below Start with Windows, translated into all five languages. The existing native window subclass observes WM_SIZE / SIZE_MINIMIZED and queues hiding on the UI thread, checking that the window is still minimized and the tray icon is available. No polling was added. Ordinary minimization stays unchanged when disabled; tray restore and session/power state retain their existing behavior. Existing application policy and click-sequence tests passed. Interactive minimize/restore acceptance remains to be confirmed on the target device. No screen capture or screenshot update was used.

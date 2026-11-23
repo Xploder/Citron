@@ -10,7 +10,7 @@ A compact, multilingual Windows tray companion for Citrix sessions.
 
 **WinUI 3 · One EXE · 5 languages · Windows x64 · Public release**
 
-[Download v0.4.3](https://github.com/Xploder/Citron/releases/tag/v0.4.3) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
+[Download v0.4.4](https://github.com/Xploder/Citron/releases/tag/v0.4.4) · [Build from source](#-build-it-yourself) · [Validation](docs/VALIDATION.md)
 
 <img src="docs/citron-v0.3.0.png" width="420" alt="Citron settings with session selection, activity controls, timing, and language options" />
 
@@ -40,13 +40,15 @@ Citron is a native Windows utility designed to send periodic input directly to a
 
 ## 🚀 Getting started
 
-1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.4.3).
+1. Download **Citron.exe** from [Releases](https://github.com/Xploder/Citron/releases/tag/v0.4.4).
 2. Run it from a folder you can keep permanently. No separate .NET 10 or Windows App Runtime installation is needed.
 3. On first launch, review **Set up Citrix access**. Approve the Windows UAC prompt if setup is required.
 4. Connect a session using the native Citrix Workspace client, then select **Find sessions**.
 5. Select the target, choose an interval/duration, and turn on **Keep session active**.
 
 Citron starts paused unless the optional automatic session discovery is enabled and finds an eligible session. Closing the settings window keeps it in the tray; **Quit** exits completely. A second launch brings the existing instance forward.
+
+Enable **Minimize to tray** below **Start with Windows** to hide the minimized window from the taskbar. This saved option is off by default; without it, minimizing keeps the ordinary taskbar button. Single-click the tray icon to restore the window. Minimizing does not change session activity or power options.
 
 Starting with v0.4.2, browser-renamed downloads such as `Citron (1).exe` also work. The bundled UI resources use a fixed `resources.pri` filename rather than a name derived from the executable ([Windows App SDK issue](https://github.com/microsoft/WindowsAppSDK/issues/6248)). If **Start with Windows** is enabled, run Citron from its permanent location and enable that option again after moving or renaming the executable.
 

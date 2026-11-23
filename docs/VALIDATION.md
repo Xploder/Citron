@@ -28,3 +28,7 @@ Single-click: wait for the Windows double-click threshold and verify the window 
 ## Renamed single-file downloads (v0.4.2)
 
 With no other Citron instance running and automatic session discovery disabled, copy the published EXE to Citron.exe, Citron (1).exe, and Citron (2).exe in a scratch folder. Start each separately with --tray, wait at least six seconds, and require both a live process and fresh UI created / Tray created entries in the startup log. Stop each test instance before launching the next so the single-instance guard cannot hide failures. These three cases passed locally; v0.4.1 crashed under a renamed filename. No capture was used. Also check an ordinary visible launch and the app icon manually on the target device.
+
+## Optional minimize to tray (v0.4.4)
+
+In Settings and Citrix setup, verify Minimize to tray appears immediately below Start with Windows and is off for new/older preferences. With it off, minimize and restore through the ordinary taskbar button. Enable it, minimize, and verify the taskbar button disappears while the tray icon remains. Single-click the tray icon to restore; repeat while active and paused, confirming activity/power options remain unchanged. Check persistence after restart and language changes in all five languages. A quick minimize/restore must not hide an already-restored window. If the tray icon could not be registered, minimizing must retain the taskbar button. Interactive acceptance remains to be confirmed on the target device; no screen capture was used.

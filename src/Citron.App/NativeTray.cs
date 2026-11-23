@@ -12,16 +12,16 @@ public sealed class NativeTray : IDisposable
     private const uint Callback = 0x8001;
     private readonly IntPtr hwnd;
     private readonly SubclassProc proc;
-    private readonly Action show, toggle, quit;
+    private readonly Action show, toggle, minimized, quit;
     private readonly Action<bool> sessionLock;
     private bool added;
     private IntPtr icon;
     private readonly uint taskbarCreated = RegisterWindowMessage("TaskbarCreated");
     private readonly TrayClickSequence clicks = new();
     private readonly DispatcherTimer clickTimer = new();
-    public NativeTray(IntPtr window, Action show, Action toggle, Action<bool> sessionLock, Action quit)
+    public NativeTray(IntPtr window, Action show, Action toggle, Action<bool> sessionLock, Action minimized, Action quit)
     {
-        hwnd = window; this.show = show; this.toggle = toggle; this.sessionLock = sessionLock; this.quit = quit;
+        hwnd = window; this.show = show; this.toggle = toggle; this.sessionLock = sessionLock; this.minimized = minimized; this.quit = quit;
         clickTimer.Tick += (_, _) => { clickTimer.Stop(); if (clicks.ConsumeSingle(Environment.TickCount64)) show(); };
         icon = LoadImage(IntPtr.Zero, Path.Combine(AppContext.BaseDirectory, "Assets", "CitronPaused.ico"), 1, 32, 32, 0x10);
         proc = WndProc;
@@ -33,6 +33,7 @@ public sealed class NativeTray : IDisposable
     public bool IsAvailable => added;
     private IntPtr WndProc(IntPtr h, uint message, UIntPtr w, IntPtr l, UIntPtr id, UIntPtr data)
     {
+        if (message == 0x0005 && w.ToUInt64() == 1) minimized(); // WM_SIZE / SIZE_MINIMIZED
         if (message == 0x02B1) { if (w.ToUInt64() == 7) sessionLock(true); if (w.ToUInt64() == 8) sessionLock(false); }
         if (message == taskbarCreated) { CancelClick(); Add(); return IntPtr.Zero; }
         if (message == 0x8002) { show(); return IntPtr.Zero; }
